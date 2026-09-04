@@ -45,13 +45,11 @@ OLLAMA_MODEL = os.getenv(
 # CLOUD AI
 # ------------------------------------------------------------
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-OPENAI_MODEL = os.getenv(
-    "OPENAI_MODEL",
-    "gpt-5.6-luna"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv(
+    "GROQ_MODEL",
+    "llama-3.3-70b-versatile"
 )
-
 
 # ============================================================
 # SYSTEM PROMPT
