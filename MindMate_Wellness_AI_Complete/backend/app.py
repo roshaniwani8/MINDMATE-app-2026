@@ -7,15 +7,17 @@ from flask import (
     stream_with_context
 )
 
-import requests
 import os
 import json
-import traceback
 import uuid
+import traceback
+import requests
 
 
 # ============================================================
-# MINDMATE AI — RENDER + LOCAL
+# MINDMATE AI
+# GROQ CLOUD + LOCAL OLLAMA
+# RENDER READY
 # ============================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,8 +26,12 @@ app = Flask(__name__)
 
 
 # ============================================================
-# CONFIG
+# CONFIGURATION
 # ============================================================
+
+# -------------------------
+# Ollama - LOCAL ONLY
+# -------------------------
 
 OLLAMA_BASE = os.getenv(
     "OLLAMA_BASE",
@@ -41,15 +47,19 @@ OLLAMA_MODEL = os.getenv(
 )
 
 
-# ------------------------------------------------------------
-# CLOUD AI
-# ------------------------------------------------------------
+# -------------------------
+# Groq - CLOUD
+# -------------------------
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_KEY = os.getenv(
+    "GROQ_API_KEY"
+)
+
 GROQ_MODEL = os.getenv(
     "GROQ_MODEL",
     "llama-3.3-70b-versatile"
 )
+
 
 # ============================================================
 # SYSTEM PROMPT
@@ -58,31 +68,46 @@ GROQ_MODEL = os.getenv(
 SYSTEM_PROMPT = """
 You are MindMate, a supportive everyday wellbeing companion.
 
-Be warm, friendly, respectful and concise.
+Your personality:
+- Warm
+- Friendly
+- Calm
+- Respectful
+- Encouraging
+- Concise
 
-Help students reflect on their feelings and everyday wellbeing.
+Help students with:
+- Everyday stress
+- Study pressure
+- Motivation
+- Organization
+- Healthy routines
+- Reflection
+- General wellbeing
+- School and college life
 
-Do not diagnose medical or mental health conditions.
-Do not prescribe medication.
-
-Encourage healthy everyday habits, reflection, rest,
-breaks, organization, and talking to trusted people
-when useful.
+Important:
+- Do not diagnose medical or mental health conditions.
+- Do not prescribe medication.
+- Do not pretend to be a doctor or therapist.
+- Encourage healthy everyday habits.
+- Encourage talking to a trusted person when appropriate.
+- Keep responses practical and easy to understand.
 
 You are a wellbeing companion, not a replacement for
-professional care.
+professional healthcare.
 """
 
 
 # ============================================================
-# CONVERSATIONS
+# CONVERSATION MEMORY
 # ============================================================
 
 conversations = {}
 
 
 # ============================================================
-# FRONTEND
+# FRONTEND FILES
 # ============================================================
 
 @app.route("/")
@@ -115,22 +140,38 @@ def script_js():
 @app.route("/integrations.json")
 def integrations_file():
 
-    return send_from_directory(
+    path = os.path.join(
         BASE_DIR,
         "integrations.json"
     )
 
+    if os.path.exists(path):
+
+        return send_from_directory(
+            BASE_DIR,
+            "integrations.json"
+        )
+
+    return jsonify({
+        "integrations": [],
+        "privacy": "Local demo mode"
+    })
+
 
 # ============================================================
-# HEALTH
+# HEALTH CHECK
 # ============================================================
 
 @app.route("/api/health")
 def health():
 
     ollama_online = False
-    model_installed = False
+    ollama_model_installed = False
     available_models = []
+
+    # ----------------------------------------
+    # Check Ollama
+    # ----------------------------------------
 
     try:
 
@@ -145,18 +186,26 @@ def health():
 
         available_models = [
             model.get("name", "")
-            for model in data.get("models", [])
+            for model in data.get(
+                "models",
+                []
+            )
         ]
-
-        model_installed = (
-            OLLAMA_MODEL in available_models
-        )
 
         ollama_online = True
 
+        ollama_model_installed = (
+            OLLAMA_MODEL in available_models
+        )
+
     except Exception:
+
         pass
 
+
+    # ----------------------------------------
+    # Return status
+    # ----------------------------------------
 
     return jsonify({
 
@@ -172,19 +221,26 @@ def health():
 
         "ollama_model": OLLAMA_MODEL,
 
-        "ollama_model_installed": model_installed,
+        "ollama_model_installed":
+            ollama_model_installed,
 
-        "available_models": available_models,
+        "available_models":
+            available_models,
 
-        "cloud_ai": bool(OPENAI_API_KEY),
+        "cloud_ai":
+            bool(GROQ_API_KEY),
 
-        "cloud_model": OPENAI_MODEL
+        "cloud_provider":
+            "Groq",
+
+        "cloud_model":
+            GROQ_MODEL
 
     })
 
 
 # ============================================================
-# INTEGRATIONS
+# INTEGRATIONS API
 # ============================================================
 
 @app.route("/api/integrations")
@@ -210,33 +266,42 @@ def integrations():
     except Exception:
 
         return jsonify({
+
             "integrations": [],
-            "privacy": "Local demo mode"
+
+            "privacy":
+                "Local demo mode"
+
         })
 
 
 # ============================================================
-# OLLAMA
+# LOCAL OLLAMA STREAM
 # ============================================================
 
 def stream_ollama(
-    history,
-    conversation_id
+    history
 ):
 
     payload = {
 
-        "model": OLLAMA_MODEL,
+        "model":
+            OLLAMA_MODEL,
 
         "messages": [
+
             {
-                "role": "system",
-                "content": SYSTEM_PROMPT
+                "role":
+                    "system",
+
+                "content":
+                    SYSTEM_PROMPT
             }
+
         ] + history,
 
-        "stream": True
-
+        "stream":
+            True
     }
 
 
@@ -249,8 +314,8 @@ def stream_ollama(
         stream=True,
 
         timeout=120
-
     )
+
 
     response.raise_for_status()
 
@@ -262,6 +327,7 @@ def stream_ollama(
 
         if not line:
             continue
+
 
         try:
 
@@ -287,10 +353,11 @@ def stream_ollama(
 
             yield {
 
-                "type": "token",
+                "type":
+                    "token",
 
-                "token": token
-
+                "token":
+                    token
             }
 
 
@@ -301,69 +368,286 @@ def stream_ollama(
 
     yield {
 
-        "type": "complete",
+        "type":
+            "complete",
 
-        "reply": full_reply
-
+        "reply":
+            full_reply
     }
 
 
 # ============================================================
-# OPENAI CLOUD
+# GROQ STREAM
 # ============================================================
 
-def stream_groq(history, conversation_id):
+def stream_groq(
+    history
+):
 
     if not GROQ_API_KEY:
+
         raise RuntimeError(
             "GROQ_API_KEY is not configured."
         )
 
+
     from groq import Groq
+
 
     client = Groq(
         api_key=GROQ_API_KEY
     )
 
+
     messages = [
+
         {
-            "role": "system",
-            "content": SYSTEM_PROMPT
+            "role":
+                "system",
+
+            "content":
+                SYSTEM_PROMPT
         }
+
     ] + history
 
+
     stream = client.chat.completions.create(
+
         model=GROQ_MODEL,
+
         messages=messages,
+
         temperature=0.7,
+
         max_completion_tokens=1024,
+
         stream=True
     )
 
+
     full_reply = ""
+
 
     for chunk in stream:
 
         if not chunk.choices:
+
             continue
 
-        token = chunk.choices[0].delta.content
+
+        token = (
+            chunk
+            .choices[0]
+            .delta
+            .content
+        )
+
 
         if token:
+
             full_reply += token
 
             yield {
-                "type": "token",
-                "token": token
+
+                "type":
+                    "token",
+
+                "token":
+                    token
             }
 
+
     yield {
-        "type": "complete",
-        "reply": full_reply
+
+        "type":
+            "complete",
+
+        "reply":
+            full_reply
     }
 
+
+# ============================================================
+# CHAT API
+# ============================================================
+
+@app.route(
+    "/api/chat",
+    methods=["POST"]
+)
+def chat():
+
+    data = request.get_json(
+        silent=True
+    )
+
+
+    # ----------------------------------------
+    # Validate request
+    # ----------------------------------------
+
+    if not data:
+
+        return jsonify({
+
+            "error":
+                "Invalid request."
+
+        }), 400
+
+
+    user_message = data.get(
+        "message",
+        ""
+    )
+
+
+    if not isinstance(
+        user_message,
+        str
+    ):
+
+        return jsonify({
+
+            "error":
+                "Message must be text."
+
+        }), 400
+
+
+    user_message = (
+        user_message
+        .strip()
+    )
+
+
+    if not user_message:
+
+        return jsonify({
+
+            "error":
+                "Please type a message."
+
+        }), 400
+
+
+    # ----------------------------------------
+    # Conversation ID
+    # ----------------------------------------
+
+    conversation_id = (
+
+        data.get(
+            "conversation_id"
+        )
+
+        or str(uuid.uuid4())
+
+    )
+
+
+    # ----------------------------------------
+    # Existing history
+    # ----------------------------------------
+
+    history = conversations.get(
+
+        conversation_id,
+
+        []
+
+    )
+
+
+    history = list(history)
+
+
+    # Add user message
+
+    history.append({
+
+        "role":
+            "user",
+
+        "content":
+            user_message
+
+    })
+
+
+    # ========================================================
+    # STREAM GENERATOR
+    # ========================================================
+
+    def generate():
+
+        provider = None
+
+        full_reply = ""
+
+
         # ====================================================
-        # 2. CLOUD FALLBACK
+        # FIRST: TRY OLLAMA
+        # ====================================================
+
+        try:
+
+            print(
+                "Trying local Ollama..."
+            )
+
+
+            for event in stream_ollama(
+                history
+            ):
+
+                if event["type"] == "token":
+
+                    token = event["token"]
+
+                    full_reply += token
+
+
+                    yield (
+                        "data: "
+                        + json.dumps({
+
+                            "token":
+                                token,
+
+                            "conversation_id":
+                                conversation_id
+
+                        })
+                        + "\n\n"
+                    )
+
+
+                elif event["type"] == "complete":
+
+                    provider = "ollama"
+
+
+            print(
+                "Ollama response successful."
+            )
+
+
+        except Exception as error:
+
+            print(
+                "Ollama unavailable:",
+                repr(error)
+            )
+
+            full_reply = ""
+
+            provider = None
+
+
+        # ====================================================
+        # SECOND: GROQ CLOUD
         # ====================================================
 
         if provider is None:
@@ -371,14 +655,13 @@ def stream_groq(history, conversation_id):
             try:
 
                 print(
-                    "Using cloud AI:",
-                    OPENAI_MODEL
+                    "Using Groq:",
+                    GROQ_MODEL
                 )
 
 
-                for event in stream_openai(
-                    history,
-                    conversation_id
+                for event in stream_groq(
+                    history
                 ):
 
                     if event["type"] == "token":
@@ -391,9 +674,13 @@ def stream_groq(history, conversation_id):
                         yield (
                             "data: "
                             + json.dumps({
-                                "token": token,
+
+                                "token":
+                                    token,
+
                                 "conversation_id":
                                     conversation_id
+
                             })
                             + "\n\n"
                         )
@@ -401,11 +688,11 @@ def stream_groq(history, conversation_id):
 
                     elif event["type"] == "complete":
 
-                        provider = "cloud"
+                        provider = "groq"
 
 
                 print(
-                    "Cloud AI response successful."
+                    "Groq response successful."
                 )
 
 
@@ -413,20 +700,23 @@ def stream_groq(history, conversation_id):
 
                 print("")
                 print("=" * 60)
-                print("MINDMATE CLOUD AI ERROR")
+                print("MINDMATE GROQ ERROR")
                 print("=" * 60)
-                print(repr(error))
+                print(
+                    repr(error)
+                )
                 traceback.print_exc()
                 print("=" * 60)
+                print("")
 
 
                 yield (
                     "data: "
                     + json.dumps({
+
                         "error":
-                        "MindMate could not connect to an AI service right now. Please try again.",
-                        "conversation_id":
-                            conversation_id
+                        "MindMate could not connect to the AI service. Please check the AI configuration."
+
                     })
                     + "\n\n"
                 )
@@ -442,37 +732,47 @@ def stream_groq(history, conversation_id):
 
             conversations[
                 conversation_id
-            ] = history + [
+            ] = (
 
-                {
-                    "role": "assistant",
+                history
+                + [
+                    {
+                        "role":
+                            "assistant",
 
-                    "content": full_reply
-                }
+                        "content":
+                            full_reply
+                    }
+                ]
 
-            ]
+            )
 
 
         # ====================================================
-        # DONE
+        # SEND DONE EVENT
         # ====================================================
 
         yield (
             "data: "
             + json.dumps({
 
-                "done": True,
+                "done":
+                    True,
 
                 "conversation_id":
                     conversation_id,
 
                 "provider":
-                    provider or "unknown"
+                    provider
 
             })
             + "\n\n"
         )
 
+
+    # ========================================================
+    # SSE RESPONSE
+    # ========================================================
 
     return Response(
 
@@ -480,10 +780,8 @@ def stream_groq(history, conversation_id):
             generate()
         ),
 
-        content_type=(
-            "text/event-stream; "
-            "charset=utf-8"
-        ),
+        content_type=
+            "text/event-stream; charset=utf-8",
 
         headers={
 
@@ -514,8 +812,11 @@ def get_conversation(
 ):
 
     history = conversations.get(
+
         conversation_id,
+
         []
+
     )
 
 
@@ -543,14 +844,18 @@ def delete_conversation(
 ):
 
     conversations.pop(
+
         conversation_id,
+
         None
+
     )
 
 
     return jsonify({
 
-        "status": "deleted",
+        "status":
+            "deleted",
 
         "conversation_id":
             conversation_id
@@ -559,44 +864,73 @@ def delete_conversation(
 
 
 # ============================================================
-# 404 HANDLER
+# 404
 # ============================================================
 
 @app.errorhandler(404)
-def not_found(error):
+def route_not_found(error):
 
     return jsonify({
 
-        "error": "Route not found",
+        "error":
+            "Route not found",
 
-        "path": request.path
+        "path":
+            request.path
 
     }), 404
 
 
 # ============================================================
-# LOCAL DEVELOPMENT
+# LOCAL RUN
 # ============================================================
 
 if __name__ == "__main__":
 
     port = int(
+
         os.getenv(
             "PORT",
             "8000"
         )
+
     )
 
 
     print("=" * 60)
-    print("MINDMATE AI")
+    print("MINDMATE AI — WELLNESS SUITE")
     print("=" * 60)
-    print("Base directory :", BASE_DIR)
-    print("Ollama         :", OLLAMA_CHAT_URL)
-    print("Ollama model   :", OLLAMA_MODEL)
-    print("Cloud AI       :", bool(OPENAI_API_KEY))
-    print("Cloud model    :", OPENAI_MODEL)
-    print("Port           :", port)
+
+    print(
+        "Base directory:",
+        BASE_DIR
+    )
+
+    print(
+        "Ollama:",
+        OLLAMA_CHAT_URL
+    )
+
+    print(
+        "Ollama model:",
+        OLLAMA_MODEL
+    )
+
+    print(
+        "Groq configured:",
+        bool(GROQ_API_KEY)
+    )
+
+    print(
+        "Groq model:",
+        GROQ_MODEL
+    )
+
+    print(
+        "Port:",
+        port
+    )
+
     print("=" * 60)
 
 
@@ -609,4 +943,3 @@ if __name__ == "__main__":
         debug=False
 
     )
-    
