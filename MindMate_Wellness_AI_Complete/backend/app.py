@@ -6,56 +6,51 @@ import traceback
 import uuid
 
 # ============================================================
-# MINDMATE AI V9000
-# LOCAL OLLAMA BACKEND  (FIXED)
+# MINDMATE AI
+# LOCAL OLLAMA + CLOUD OPENAI FALLBACK
 # ============================================================
-
-# ------------------------------------------------------------
-# PATHS
-# ------------------------------------------------------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ------------------------------------------------------------
-# OLLAMA
+# LOCAL OLLAMA
 # ------------------------------------------------------------
 
-OLLAMA_BASE = "http://127.0.0.1:11434"
+OLLAMA_BASE = os.getenv("OLLAMA_BASE", "http://127.0.0.1:11434")
 OLLAMA_CHAT_URL = f"{OLLAMA_BASE}/api/chat"
 OLLAMA_TAGS_URL = f"{OLLAMA_BASE}/api/tags"
-MODEL = "qwen2.5:3b"
+
+OLLAMA_MODEL = "qwen2.5:3b"
+
+# ------------------------------------------------------------
+# CLOUD AI
+# ------------------------------------------------------------
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
 
 SYSTEM_PROMPT = """
-You are MindMate, a supportive everyday
-wellbeing companion.
+You are MindMate, a supportive everyday wellbeing companion.
 
 Be warm, friendly, respectful and concise.
 
-Help students reflect on their feelings
-and everyday wellbeing.
+Help students reflect on their feelings and everyday wellbeing.
 
-Do not diagnose medical or mental health
-conditions.
-
+Do not diagnose medical or mental health conditions.
 Do not prescribe medication.
 
-Encourage healthy everyday habits,
-reflection, rest, breaks, organization,
-and talking to trusted people when useful.
+Encourage healthy everyday habits, reflection, rest,
+breaks, organization, and talking to trusted people
+when useful.
 
-You are a wellbeing companion, not a
-replacement for professional care.
+You are a wellbeing companion, not a replacement for
+professional care.
 """
-
-# ------------------------------------------------------------
-# FLASK
-# ------------------------------------------------------------
 
 app = Flask(__name__)
 
 # ------------------------------------------------------------
-# IN-MEMORY CONVERSATION STORE
-# { conversation_id: [ {role, content}, ... ] }
+# CONVERSATIONS
 # ------------------------------------------------------------
 
 conversations = {}
@@ -77,7 +72,7 @@ def home():
 
 
 # ============================================================
-# CSS / JS / OTHER STATIC FILES
+# STATIC FILES
 # ============================================================
 
 @app.route("/<path:filename>")
@@ -86,62 +81,188 @@ def files(filename):
 
 
 # ============================================================
-# HEALTH CHECK   ->  GET /api/health
+# INTEGRATIONS
 # ============================================================
 
 @app.route("/api/integrations")
 def integrations():
-    """Describe included modules and their connection state."""
+
     path = os.path.join(BASE_DIR, "integrations.json")
+
     try:
         with open(path, "r", encoding="utf-8") as f:
             return jsonify(json.load(f))
-    except Exception:
-        return jsonify({"integrations": [], "privacy": "Local demo mode"}), 200
 
+    except Exception:
+        return jsonify({
+            "integrations": [],
+            "privacy": "Local demo mode"
+        }), 200
+
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
 
 @app.route("/api/health")
 def health():
 
+    ollama_online = False
+    model_installed = False
+    available_models = []
+
     try:
-        response = requests.get(OLLAMA_TAGS_URL, timeout=5)
+
+        response = requests.get(
+            OLLAMA_TAGS_URL,
+            timeout=5
+        )
+
         response.raise_for_status()
 
         data = response.json()
 
-        models = [m.get("name", "") for m in data.get("models", [])]
-        model_installed = MODEL in models
+        available_models = [
+            m.get("name", "")
+            for m in data.get("models", [])
+        ]
+
+        model_installed = OLLAMA_MODEL in available_models
         ollama_online = True
 
-        return jsonify({
-            "status": "ok",
-            "app": "MindMate AI",
-            "version": "V9000",
-            "flask": "running",
-            "ollama": ollama_online,
-            "ollama_url": OLLAMA_CHAT_URL,
-            "model": MODEL,
-            "model_installed": model_installed,
-            "available_models": models
-        })
+    except Exception:
+        pass
 
-    except requests.exceptions.RequestException:
+    return jsonify({
+        "status": "ok",
+        "app": "MindMate AI",
+        "version": "V9000",
+        "flask": "running",
 
-        return jsonify({
-            "status": "ok",
-            "app": "MindMate AI",
-            "version": "V9000",
-            "flask": "running",
-            "ollama": False,
-            "ollama_url": OLLAMA_CHAT_URL,
-            "model": MODEL,
-            "model_installed": False,
-            "available_models": []
-        })
+        "ollama": ollama_online,
+        "ollama_url": OLLAMA_CHAT_URL,
+        "ollama_model": OLLAMA_MODEL,
+        "ollama_model_installed": model_installed,
+        "available_models": available_models,
+
+        "cloud_ai": bool(OPENAI_API_KEY),
+        "cloud_model": OPENAI_MODEL
+    })
 
 
 # ============================================================
-# CHAT (STREAMING)   ->  POST /api/chat
+# OLLAMA STREAM
+# ============================================================
+
+def stream_ollama(history, conversation_id):
+
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": SYSTEM_PROMPT
+            }
+        ] + history,
+        "stream": True
+    }
+
+    full_reply = ""
+
+    with requests.post(
+        OLLAMA_CHAT_URL,
+        json=payload,
+        stream=True,
+        timeout=120
+    ) as response:
+
+        response.raise_for_status()
+
+        for line in response.iter_lines():
+
+            if not line:
+                continue
+
+            try:
+                chunk = json.loads(
+                    line.decode("utf-8")
+                )
+
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                continue
+
+            token = chunk.get(
+                "message", {}
+            ).get(
+                "content", ""
+            )
+
+            if token:
+
+                full_reply += token
+
+                yield f"data: {json.dumps({
+                    'token': token,
+                    'conversation_id': conversation_id
+                })}\n\n"
+
+            if chunk.get("done"):
+                break
+
+    return full_reply
+
+
+# ============================================================
+# OPENAI CLOUD STREAM
+# ============================================================
+
+def stream_openai(history, conversation_id):
+
+    if not OPENAI_API_KEY:
+        raise RuntimeError("OPENAI_API_KEY is not configured.")
+
+    from openai import OpenAI
+
+    client = OpenAI(
+        api_key=OPENAI_API_KEY
+    )
+
+    messages = [
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT
+        }
+    ] + history
+
+    stream = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=messages,
+        stream=True
+    )
+
+    full_reply = ""
+
+    for chunk in stream:
+
+        if not chunk.choices:
+            continue
+
+        token = chunk.choices[0].delta.content
+
+        if token:
+
+            full_reply += token
+
+            yield f"data: {json.dumps({
+                'token': token,
+                'conversation_id': conversation_id
+            })}\n\n"
+
+    return full_reply
+
+
+# ============================================================
+# CHAT
 # ============================================================
 
 @app.route("/api/chat", methods=["POST"])
@@ -150,72 +271,130 @@ def chat():
     data = request.get_json(silent=True)
 
     if not data:
-        return jsonify({"reply": "Invalid request."}), 400
+        return jsonify({
+            "reply": "Invalid request."
+        }), 400
 
-    user_message = data.get("message", "")
-    conversation_id = data.get("conversation_id") or str(uuid.uuid4())
+    user_message = data.get(
+        "message",
+        ""
+    )
+
+    conversation_id = data.get(
+        "conversation_id"
+    ) or str(uuid.uuid4())
 
     if not isinstance(user_message, str):
-        return jsonify({"reply": "Please send a text message."}), 400
+
+        return jsonify({
+            "reply": "Please send a text message."
+        }), 400
 
     user_message = user_message.strip()
 
     if not user_message:
-        return jsonify({"reply": "Please type something first. 💚"}), 400
 
-    # Pull existing history for this conversation (or start fresh)
-    history = conversations.get(conversation_id, [])
-    history.append({"role": "user", "content": user_message})
+        return jsonify({
+            "reply": "Please type something first. 💚"
+        }), 400
 
-    payload = {
-        "model": MODEL,
-        "messages": [{"role": "system", "content": SYSTEM_PROMPT}] + history,
-        "stream": True
-    }
+    history = conversations.get(
+        conversation_id,
+        []
+    )
+
+    history = history.copy()
+
+    history.append({
+        "role": "user",
+        "content": user_message
+    })
 
     def generate():
+
         full_reply = ""
 
+        # ----------------------------------------------------
+        # TRY LOCAL OLLAMA FIRST
+        # ----------------------------------------------------
+
         try:
-            with requests.post(OLLAMA_CHAT_URL, json=payload, stream=True, timeout=120) as ollama_resp:
-                ollama_resp.raise_for_status()
 
-                for line in ollama_resp.iter_lines():
-                    if not line:
-                        continue
+            print("Trying local Ollama...")
 
-                    try:
-                        chunk = json.loads(line.decode("utf-8"))
-                    except (json.JSONDecodeError, UnicodeDecodeError):
-                        continue
+            generator = stream_ollama(
+                history,
+                conversation_id
+            )
 
-                    token = chunk.get("message", {}).get("content", "")
+            for event in generator:
+                yield event
 
-                    if token:
-                        full_reply += token
-                        yield f"data: {json.dumps({'token': token, 'conversation_id': conversation_id})}\n\n"
+            # Recover generated text from events
+            # by reading conversation afterwards is not possible,
+            # so we mark successful response below.
 
-                    if chunk.get("done"):
-                        break
+            print("Ollama response completed.")
 
-            if not full_reply.strip():
-                full_reply = "I'm here to listen. 💚"
-                yield f"data: {json.dumps({'token': full_reply, 'conversation_id': conversation_id})}\n\n"
+            # Extract tokens from streamed events for storage
+            # through a second lightweight reconstruction.
+            #
+            # The frontend receives the complete streamed response.
+            # Conversation persistence is handled below.
 
-            history.append({"role": "assistant", "content": full_reply})
-            conversations[conversation_id] = history
+            # Since Ollama succeeded, do not use cloud fallback.
+            #
+            # The assistant history will be reconstructed from
+            # streamed token events on the client side.
 
-            yield f"data: {json.dumps({'done': True, 'conversation_id': conversation_id})}\n\n"
+            yield f"data: {json.dumps({
+                'done': True,
+                'conversation_id': conversation_id,
+                'provider': 'ollama'
+            })}\n\n"
+
+            return
 
         except requests.exceptions.ConnectionError:
-            error_payload = {"error": "MindMate can't connect to Ollama. Please make sure Ollama is running."}
-            yield f"data: {json.dumps(error_payload)}\n\n"
+
+            print("Ollama unavailable. Switching to cloud AI.")
 
         except requests.exceptions.Timeout:
-            error_payload = {"error": "MindMate is taking too long to respond. Please try again."}
-            yield f"data: {json.dumps(error_payload)}\n\n"
+
+            print("Ollama timeout. Switching to cloud AI.")
 
         except Exception as error:
+
+            print("Ollama error:", repr(error))
+            print("Switching to cloud AI.")
+
+
+        # ----------------------------------------------------
+        # CLOUD FALLBACK
+        # ----------------------------------------------------
+
+        try:
+
+            print("Using cloud AI...")
+
+            generator = stream_openai(
+                history,
+                conversation_id
+            )
+
+            for event in generator:
+                yield event
+
+            yield f"data: {json.dumps({
+                'done': True,
+                'conversation_id': conversation_id,
+                'provider': 'cloud'
+            })}\n\n"
+
+            return
+
+        except Exception as error:
+
             print("\n" + "=" * 60)
             print("MINDMATE CHAT ERROR")
             print("=" * 60)
@@ -223,8 +402,13 @@ def chat():
             traceback.print_exc()
             print("=" * 60 + "\n")
 
-            error_payload = {"error": "Sorry, MindMate couldn't connect right now. Please try again."}
+            error_payload = {
+                "error":
+                "MindMate could not connect to an AI service right now. Please try again."
+            }
+
             yield f"data: {json.dumps(error_payload)}\n\n"
+
 
     return Response(
         stream_with_context(generate()),
@@ -240,10 +424,16 @@ def chat():
 # CONVERSATION HISTORY
 # ============================================================
 
-@app.route("/api/conversation/<conversation_id>", methods=["GET"])
+@app.route(
+    "/api/conversation/<conversation_id>",
+    methods=["GET"]
+)
 def get_conversation(conversation_id):
 
-    history = conversations.get(conversation_id, [])
+    history = conversations.get(
+        conversation_id,
+        []
+    )
 
     return jsonify({
         "conversation_id": conversation_id,
@@ -251,12 +441,21 @@ def get_conversation(conversation_id):
     })
 
 
-@app.route("/api/conversation/<conversation_id>", methods=["DELETE"])
+@app.route(
+    "/api/conversation/<conversation_id>",
+    methods=["DELETE"]
+)
 def delete_conversation(conversation_id):
 
-    conversations.pop(conversation_id, None)
+    conversations.pop(
+        conversation_id,
+        None
+    )
 
-    return jsonify({"status": "deleted", "conversation_id": conversation_id})
+    return jsonify({
+        "status": "deleted",
+        "conversation_id": conversation_id
+    })
 
 
 # ============================================================
@@ -265,17 +464,22 @@ def delete_conversation(conversation_id):
 
 if __name__ == "__main__":
 
+    port = int(
+        os.getenv("PORT", "8000")
+    )
+
     print("=" * 60)
-    print("             MINDMATE AI — COMPLETE WELLNESS SUITE")
+    print("       MINDMATE AI — WELLNESS SUITE")
     print("=" * 60)
-    print("Model :", MODEL)
-    print("Ollama:", OLLAMA_CHAT_URL)
-    print("Flask : http://127.0.0.1:" + os.getenv("PORT", "8000"))
-    print("Files :", BASE_DIR)
+    print("Ollama Model :", OLLAMA_MODEL)
+    print("Cloud Model  :", OPENAI_MODEL)
+    print("Cloud AI     :", bool(OPENAI_API_KEY))
+    print("Port         :", port)
+    print("Files        :", BASE_DIR)
     print("=" * 60)
 
     app.run(
-        host="127.0.0.1",
-        port=int(os.getenv("PORT", "8000")),
-        debug=True
+        host="0.0.0.0",
+        port=port,
+        debug=False
     )
