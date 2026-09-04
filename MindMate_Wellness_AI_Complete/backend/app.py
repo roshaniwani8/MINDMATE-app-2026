@@ -312,218 +312,55 @@ def stream_ollama(
 # OPENAI CLOUD
 # ============================================================
 
-def stream_openai(
-    history,
-    conversation_id
-):
+def stream_groq(history, conversation_id):
 
-    if not OPENAI_API_KEY:
-
+    if not GROQ_API_KEY:
         raise RuntimeError(
-            "OPENAI_API_KEY is not configured on Render."
+            "GROQ_API_KEY is not configured."
         )
 
+    from groq import Groq
 
-    from openai import OpenAI
-
-
-    client = OpenAI(
-        api_key=OPENAI_API_KEY
+    client = Groq(
+        api_key=GROQ_API_KEY
     )
 
-
     messages = [
-
         {
             "role": "system",
             "content": SYSTEM_PROMPT
         }
-
     ] + history
 
-
     stream = client.chat.completions.create(
-
-        model=OPENAI_MODEL,
-
+        model=GROQ_MODEL,
         messages=messages,
-
+        temperature=0.7,
+        max_completion_tokens=1024,
         stream=True
-
     )
 
-
     full_reply = ""
-
 
     for chunk in stream:
 
         if not chunk.choices:
             continue
 
-
-        token = (
-            chunk.choices[0]
-            .delta
-            .content
-        )
-
+        token = chunk.choices[0].delta.content
 
         if token:
-
             full_reply += token
 
             yield {
-
                 "type": "token",
-
                 "token": token
-
             }
 
-
     yield {
-
         "type": "complete",
-
         "reply": full_reply
-
     }
-
-
-# ============================================================
-# CHAT
-# ============================================================
-
-@app.route(
-    "/api/chat",
-    methods=["POST"]
-)
-def chat():
-
-    data = request.get_json(
-        silent=True
-    )
-
-
-    if not data:
-
-        return jsonify({
-            "error": "Invalid request."
-        }), 400
-
-
-    user_message = data.get(
-        "message",
-        ""
-    )
-
-
-    if not isinstance(
-        user_message,
-        str
-    ):
-
-        return jsonify({
-            "error": "Message must be text."
-        }), 400
-
-
-    user_message = user_message.strip()
-
-
-    if not user_message:
-
-        return jsonify({
-            "error": "Please type a message."
-        }), 400
-
-
-    conversation_id = (
-        data.get("conversation_id")
-        or str(uuid.uuid4())
-    )
-
-
-    history = conversations.get(
-        conversation_id,
-        []
-    )
-
-
-    history = list(history)
-
-
-    history.append({
-
-        "role": "user",
-
-        "content": user_message
-
-    })
-
-
-    def generate():
-
-        provider = None
-
-        full_reply = ""
-
-
-        # ====================================================
-        # 1. TRY OLLAMA
-        # ====================================================
-
-        try:
-
-            print(
-                "Trying Ollama:",
-                OLLAMA_CHAT_URL
-            )
-
-
-            for event in stream_ollama(
-                history,
-                conversation_id
-            ):
-
-                if event["type"] == "token":
-
-                    token = event["token"]
-
-                    full_reply += token
-
-
-                    yield (
-                        "data: "
-                        + json.dumps({
-                            "token": token,
-                            "conversation_id":
-                                conversation_id
-                        })
-                        + "\n\n"
-                    )
-
-
-                elif event["type"] == "complete":
-
-                    provider = "ollama"
-
-
-            print(
-                "Ollama response successful."
-            )
-
-
-        except Exception as error:
-
-            print(
-                "Ollama unavailable:",
-                repr(error)
-            )
-
-            full_reply = ""
-
 
         # ====================================================
         # 2. CLOUD FALLBACK
