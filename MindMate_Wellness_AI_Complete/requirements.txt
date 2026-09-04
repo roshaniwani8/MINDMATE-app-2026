@@ -1,5 +1,5 @@
-
-flask
+Flask
 python-dotenv
 openai
+requests
 gunicorn
