@@ -1,0 +1,2294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>MindMate AI — Complete Wellness Suite</title>
+
+    <link
+        rel="stylesheet"
+        href="/style.css"
+    >
+
+    <style>
+/* =========================================================
+   MINDMATE — WELLNESS SUITE
+   (Activity / Nutrition / Meditate / Sleep / Train / Cycle / Scan / Talk)
+========================================================= */
+
+.suite{ padding:28px 34px 60px; overflow-y:auto; height:100%; }
+
+.suite-tabs{
+  display:flex; flex-wrap:wrap; gap:8px;
+  margin:18px 0 22px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:14px;
+}
+.suite-tab{
+  padding:9px 14px; border-radius:10px;
+  border:1px solid var(--border); background:var(--panel2);
+  color:var(--text); font-weight:600; font-size:13px;
+}
+.suite-tab:hover{ border-color:var(--accent); }
+.suite-tab.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+.suite-panel{ display:flex; flex-direction:column; gap:20px; }
+.suite-panel.hidden{ display:none; }
+
+.suite-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+
+.suite-card{
+  background:var(--panel); border:1px solid var(--border); border-radius:14px;
+  padding:18px;
+}
+.suite-card h3{ font-size:14px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.suite-card .big{ font-size:26px; font-weight:800; }
+.suite-card .sub{ color:var(--muted); font-size:11px; margin-top:4px; }
+
+.suite-form{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; align-items:end; }
+.suite-form label{ font-size:11px; color:var(--muted); display:block; margin-bottom:4px; }
+.suite-form input, .suite-form select, .suite-form textarea{
+  width:100%; padding:10px; border-radius:9px; border:1px solid var(--border);
+  background:var(--panel2); color:var(--text);
+}
+.suite-form textarea{ resize:vertical; min-height:38px; }
+
+.suite-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+.suite-list{ display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; }
+.suite-row{
+  display:flex; justify-content:space-between; align-items:center; gap:10px;
+  padding:10px 12px; background:var(--panel2); border:1px solid var(--border); border-radius:10px;
+  font-size:12.5px;
+}
+.suite-row .row-main{ display:flex; flex-direction:column; gap:2px; }
+.suite-row .row-main strong{ font-size:13px; }
+.suite-row .row-main span{ color:var(--muted); font-size:11px; }
+.suite-row button{
+  border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:14px;
+}
+.suite-row button:hover{ color:#ff6b6b; }
+
+.suite-bar-track{ height:9px; border-radius:6px; background:var(--panel3); overflow:hidden; }
+.suite-bar-fill{ height:100%; background:var(--accent); border-radius:6px; transition:width .3s ease; }
+.suite-bar-fill.warn{ background:#f5a35c; }
+.suite-bar-fill.over{ background:#ff6b6b; }
+
+.suite-chart{ display:flex; align-items:flex-end; gap:6px; height:90px; }
+.suite-chart .bar{ flex:1; background:var(--accent); border-radius:5px 5px 0 0; min-height:3px; position:relative; }
+.suite-chart .bar span{
+  position:absolute; bottom:-18px; left:0; right:0; text-align:center; font-size:9px; color:var(--muted);
+}
+
+.suite-tabgroup{ display:flex; flex-wrap:wrap; gap:8px; }
+.suite-chip{
+  padding:8px 13px; border-radius:20px; border:1px solid var(--border); background:var(--panel2);
+  color:var(--text); font-size:12px; cursor:pointer;
+}
+.suite-chip.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+.suite-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:4px 10px; border-radius:8px; font-size:11px; font-weight:700;
+}
+.suite-badge.excellent{ background:rgba(85,217,139,.18); color:var(--success); }
+.suite-badge.good{ background:rgba(124,108,255,.18); color:var(--accent); }
+.suite-badge.mediocre{ background:rgba(245,163,92,.18); color:#f5a35c; }
+.suite-badge.poor{ background:rgba(255,107,107,.18); color:#ff6b6b; }
+
+/* meditation timer */
+.med-timer{ display:flex; flex-direction:column; align-items:center; gap:16px; padding:20px 0; }
+.med-circle{
+  width:170px; height:170px; border-radius:50%;
+  background:radial-gradient(circle, rgba(124,108,255,.25), rgba(124,108,255,.05));
+  border:2px solid var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-size:30px; font-weight:800;
+  transition:transform 4s ease-in-out;
+}
+.med-circle.breathe{ animation:medBreathe 8s ease-in-out infinite; }
+@keyframes medBreathe{
+  0%{ transform:scale(0.85); }
+  50%{ transform:scale(1.15); }
+  100%{ transform:scale(0.85); }
+}
+
+/* workout plans */
+.plan-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px; }
+.plan-card h3{ margin-bottom:8px; }
+.exercise-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--border); font-size:13px; }
+.exercise-row:last-child{ border-bottom:none; }
+.exercise-row input[type="checkbox"]{ width:16px; height:16px; }
+.exercise-row.done span{ text-decoration:line-through; color:var(--muted); }
+
+.suite-note{ font-size:11px; color:var(--muted); line-height:1.5; background:var(--panel3); padding:10px 12px; border-radius:10px; border:1px solid var(--border); }
+
+.cycle-ring-wrap{ display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+.cycle-phase{ font-size:18px; font-weight:800; }
+
+@media (max-width: 760px){
+  .suite{ padding:18px; }
+  .cycle-ring-wrap{ flex-direction:column; align-items:flex-start; }
+}
+
+    </style>
+
+
+<style>
+/* Front welcome screen */
+.mindmate-welcome{position:fixed;inset:0;z-index:100000;overflow:hidden;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 72% 48%,rgba(124,108,255,.18),transparent 34%),radial-gradient(circle at 15% 15%,rgba(76,201,240,.11),transparent 30%),#080b16;color:#fff;font-family:inherit;transition:opacity .55s ease,visibility .55s ease}
+.mindmate-welcome.is-hidden{opacity:0;visibility:hidden;pointer-events:none}
+.welcome-shell{width:min(1180px,92vw);min-height:min(690px,88vh);display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:45px;position:relative;z-index:2}
+.welcome-brand{display:flex;align-items:center;gap:13px;margin-bottom:38px}.welcome-logo{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;font-size:27px;background:linear-gradient(145deg,rgba(124,108,255,.95),rgba(80,210,188,.7));box-shadow:0 15px 45px rgba(124,108,255,.25)}
+.welcome-brand-name{font-size:23px;font-weight:800;letter-spacing:-.5px}.welcome-brand-tag{font-size:11px;color:#98a1bd;margin-top:2px;letter-spacing:.5px}
+.welcome-eyebrow{font-size:10px;letter-spacing:2.2px;color:#9c94ff;font-weight:800}.welcome-copy h1{font-size:clamp(44px,6vw,76px);line-height:.98;letter-spacing:-3.5px;margin:14px 0 22px}.welcome-copy h1 span{background:linear-gradient(90deg,#a89dff,#73e1d2);-webkit-background-clip:text;background-clip:text;color:transparent}.welcome-subtitle{max-width:640px;color:#aab1c7;font-size:16px;line-height:1.75;margin:0 0 28px}.welcome-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:650px}.welcome-feature{display:flex;align-items:center;gap:11px;padding:12px 13px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.035);backdrop-filter:blur(10px)}.welcome-feature>span{width:35px;height:35px;display:grid;place-items:center;border-radius:10px;background:rgba(124,108,255,.12);font-size:17px}.welcome-feature strong{display:block;font-size:12px}.welcome-feature small{display:block;color:#7f88a4;font-size:10px;margin-top:3px}.welcome-start{margin-top:27px;border:0;border-radius:15px;padding:15px 19px 15px 23px;background:linear-gradient(100deg,#7c6cff,#5fd5c5);color:white;font-size:14px;font-weight:800;display:flex;align-items:center;gap:28px;cursor:pointer;box-shadow:0 14px 35px rgba(101,116,255,.27);transition:transform .2s ease,box-shadow .2s ease}.welcome-start:hover{transform:translateY(-2px);box-shadow:0 18px 45px rgba(101,116,255,.38)}.welcome-arrow{font-size:20px;line-height:1}.welcome-note{font-size:10px;color:#626b85;margin:12px 0 0 3px}.welcome-visual{height:570px;position:relative;display:grid;place-items:center}.welcome-glow{position:absolute;width:420px;height:420px;border-radius:50%;background:rgba(124,108,255,.12);filter:blur(75px)}.welcome-orb{position:absolute;border-radius:50%;filter:blur(1px);opacity:.5}.orb-one{width:230px;height:230px;right:8%;top:9%;background:radial-gradient(circle,rgba(91,224,204,.16),transparent 68%)}.orb-two{width:190px;height:190px;left:8%;bottom:8%;background:radial-gradient(circle,rgba(124,108,255,.16),transparent 68%)}.visual-ring{position:absolute;border:1px solid rgba(139,130,255,.16);border-radius:50%;width:420px;height:420px}.ring-two{width:330px;height:330px;border-color:rgba(95,213,197,.12)}.visual-card{position:relative;z-index:2;width:330px;padding:23px;border:1px solid rgba(255,255,255,.11);border-radius:26px;background:linear-gradient(145deg,rgba(30,35,58,.86),rgba(15,19,34,.9));box-shadow:0 30px 80px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.06);backdrop-filter:blur(18px)}.visual-top{display:flex;justify-content:space-between;color:#8f98b2;font-size:10px}.visual-mood{font-size:64px;margin:25px 0 12px}.visual-title{font-size:17px;font-weight:800}.visual-pills{display:flex;gap:7px;margin-top:16px}.visual-pills span{padding:6px 9px;border-radius:9px;background:rgba(124,108,255,.12);color:#b9b4ff;font-size:9px}.visual-line{display:flex;align-items:flex-end;gap:6px;height:54px;margin-top:25px}.visual-line i{display:block;flex:1;border-radius:4px 4px 1px 1px;background:linear-gradient(to top,rgba(124,108,255,.75),rgba(95,213,197,.55));height:30%}.visual-line i:nth-child(2){height:55%}.visual-line i:nth-child(3){height:42%}.visual-line i:nth-child(4){height:78%}.visual-line i:nth-child(5){height:62%}.visual-line i:nth-child(6){height:88%}.visual-line i:nth-child(7){height:72%}.floating-card{position:absolute;z-index:3;display:flex;align-items:center;gap:9px;padding:12px 14px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(24,29,48,.82);box-shadow:0 15px 35px rgba(0,0,0,.28);font-size:18px;backdrop-filter:blur(12px);color:#fff}.floating-card span{font-size:9px;line-height:1.35;color:#8790aa}.floating-card b{color:#dfe3f3;font-size:10px}.float-one{left:2%;top:24%;animation:floatA 5s ease-in-out infinite}.float-two{right:0%;bottom:20%;animation:floatB 6s ease-in-out infinite}@keyframes floatA{50%{transform:translateY(-8px)}}@keyframes floatB{50%{transform:translateY(8px)}}.welcome-footer{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#4f5871;font-size:9px;letter-spacing:2px}.welcome-footer span{margin:0 6px}
+@media(max-width:900px){.welcome-shell{grid-template-columns:1fr;gap:20px;min-height:auto;padding:35px 0}.welcome-brand{margin-bottom:24px}.welcome-visual{display:none}.welcome-copy h1{font-size:52px}.welcome-subtitle{font-size:14px}.welcome-features{max-width:none}.welcome-footer{bottom:10px}}
+@media(max-width:520px){.welcome-shell{width:88vw}.welcome-copy h1{font-size:43px;letter-spacing:-2px}.welcome-features{grid-template-columns:1fr}.welcome-start{width:100%;justify-content:space-between}.welcome-note{text-align:center}.welcome-eyebrow{font-size:8px;letter-spacing:1.5px}}
+</style>
+
+</head>
+
+<body>
+
+<!-- =========================================================
+     MINDMATE — FRONT WELCOME / ONBOARDING SCREEN
+     Existing app remains unchanged underneath this entry screen.
+========================================================= -->
+<section id="mindmateWelcome" class="mindmate-welcome" aria-label="Welcome to MindMate">
+  <div class="welcome-orb orb-one"></div>
+  <div class="welcome-orb orb-two"></div>
+  <div class="welcome-glow"></div>
+
+  <div class="welcome-shell">
+    <div class="welcome-brand">
+      <div class="welcome-logo">🧠</div>
+      <div>
+        <div class="welcome-brand-name">MindMate</div>
+        <div class="welcome-brand-tag">AI Wellness Companion</div>
+      </div>
+    </div>
+
+    <div class="welcome-copy">
+      <span class="welcome-eyebrow">YOUR WELLNESS, ALL IN ONE PLACE</span>
+      <h1>Welcome to <span>MindMate</span></h1>
+      <p class="welcome-subtitle">A calm, personal space to talk, reflect, move, sleep better and build healthier everyday habits — with your AI wellness companion by your side.</p>
+
+      <div class="welcome-features">
+        <div class="welcome-feature"><span>💬</span><div><strong>AI Companion</strong><small>Talk, reflect & get support</small></div></div>
+        <div class="welcome-feature"><span>🧘</span><div><strong>Mind & Mood</strong><small>Mindfulness, mood & journaling</small></div></div>
+        <div class="welcome-feature"><span>💪</span><div><strong>Healthy Habits</strong><small>Activity, nutrition & workouts</small></div></div>
+        <div class="welcome-feature"><span>😴</span><div><strong>Rest & Recovery</strong><small>Sleep, breathing & wellness</small></div></div>
+      </div>
+
+      <button id="enterMindMate" class="welcome-start" type="button">
+        <span>Get Started</span><span class="welcome-arrow">→</span>
+      </button>
+      <p class="welcome-note">Your private wellness space. Start whenever you're ready.</p>
+    </div>
+
+    <div class="welcome-visual" aria-hidden="true">
+      <div class="visual-ring ring-one"></div>
+      <div class="visual-ring ring-two"></div>
+      <div class="visual-card visual-main">
+        <div class="visual-top"><span>Good to see you</span><span>✦</span></div>
+        <div class="visual-mood">😊</div>
+        <div class="visual-title">How are you feeling today?</div>
+        <div class="visual-pills"><span>Calm</span><span>Focused</span><span>Balanced</span></div>
+        <div class="visual-line"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="floating-card float-one">🌿 <span>Small steps<br><b>big changes</b></span></div>
+      <div class="floating-card float-two">✨ <span>Your wellness<br><b>journey starts here</b></span></div>
+    </div>
+  </div>
+
+  <div class="welcome-footer"><span>MindMate</span><span>•</span><span>Talk</span><span>•</span><span>Move</span><span>•</span><span>Rest</span><span>•</span><span>Grow</span></div>
+</section>
+
+<div class="app" id="mindmateApp">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                🧠
+            </div>
+
+            <div>
+                <h1>MindMate</h1>
+                <span>AI Wellness Companion</span>
+            </div>
+
+        </div>
+
+
+        <button
+            id="newChatBtn"
+            class="new-chat"
+        >
+            ＋ New Conversation
+        </button>
+
+
+        <nav class="nav">
+
+            <button
+                class="nav-btn active"
+                data-view="chat"
+            >
+                💬 Chat
+            </button>
+
+            <button
+                class="nav-btn"
+                data-view="dashboard"
+            >
+                📊 Dashboard
+            </button>
+
+            <button
+                class="nav-btn"
+                data-view="toolkit"
+            >
+                🌱 Wellness Toolkit
+            </button>
+
+            <button
+                class="nav-btn"
+                data-view="journal"
+            >
+                📝 Journal
+            </button>
+
+            <button
+                class="nav-btn"
+                data-view="tracker"
+            >
+                📈 Wellness Tracker
+            </button>
+
+            <button
+                class="nav-btn"
+                data-view="suite"
+            >
+                🌟 Wellness Suite
+            </button>
+
+        </nav>
+
+
+        <div class="search-box">
+
+            <input
+                id="searchChats"
+                placeholder="Search conversations..."
+            >
+
+        </div>
+
+
+        <div class="section-title">
+            Recent conversations
+        </div>
+
+
+        <div
+            id="chatList"
+            class="chat-list"
+        ></div>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="mood-mini">
+
+                <span>Today's mood</span>
+
+                <strong id="currentMood">
+                    Not selected
+                </strong>
+
+            </div>
+
+
+            <button
+                id="clearBtn"
+                class="danger-btn"
+            >
+                🗑 Clear Chat
+            </button>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+
+                <h2 id="pageTitle">
+                    MindMate
+                </h2>
+
+                <div class="status">
+
+                    <span
+                        id="statusDot"
+                        class="status-dot"
+                    ></span>
+
+                    <span id="statusText">
+                        Connecting...
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="top-actions">
+
+                <button id="moodBtn">
+                    😊 Mood
+                </button>
+
+                <button id="voiceBtn">
+                    🔊 Voice
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- CHAT VIEW -->
+
+        <section
+            id="chatView"
+            class="view"
+        >
+
+            <div
+                id="messages"
+                class="messages"
+            >
+
+                <div class="welcome">
+
+                    <div class="welcome-icon">
+                        🧠
+                    </div>
+
+                    <h2>
+                        Your space to talk, reflect and grow.
+                    </h2>
+
+                    <p>
+                        MindMate combines local AI,
+                        mood tracking and simple wellness tools.
+                    </p>
+
+
+                    <div class="suggestions">
+
+                        <button
+                            data-message="I'm feeling stressed today."
+                        >
+                            😟 I'm feeling stressed
+                        </button>
+
+                        <button
+                            data-message="Help me organize my thoughts."
+                        >
+                            🧩 Organize my thoughts
+                        </button>
+
+                        <button
+                            data-message="Give me a short breathing exercise."
+                        >
+                            🫁 Breathing exercise
+                        </button>
+
+                        <button
+                            data-message="Help me plan my day."
+                        >
+                            🎯 Plan my day
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="typing"
+                class="typing hidden"
+            >
+
+                <span></span>
+                <span></span>
+                <span></span>
+
+                <label>
+                    MindMate is thinking...
+                </label>
+
+            </div>
+
+
+            <footer class="composer">
+
+                <div class="input-wrapper">
+
+                    <textarea
+                        id="messageInput"
+                        rows="1"
+                        placeholder="Tell MindMate what's on your mind..."
+                    ></textarea>
+
+                    <button id="micBtn">
+                        🎙️
+                    </button>
+
+                    <button
+                        id="sendBtn"
+                        class="send"
+                    >
+                        ➤
+                    </button>
+
+                </div>
+
+                <p class="disclaimer">
+                    MindMate is a wellness companion,
+                    not a medical professional.
+                </p>
+
+            </footer>
+
+        </section>
+
+
+        <!-- DASHBOARD -->
+
+        <section
+            id="dashboardView"
+            class="view hidden"
+        >
+
+            <div class="dashboard">
+
+                <div class="hero-card">
+
+                    <div>
+
+                        <span class="eyebrow">
+                            YOUR WELLNESS SPACE
+                        </span>
+
+                        <h2>
+                            Understand your patterns.
+                        </h2>
+
+                        <p>
+                            Small reflections can help you
+                            understand how your days are going.
+                        </p>
+
+                    </div>
+
+                    <div class="hero-emoji">
+                        🌱
+                    </div>
+
+                </div>
+
+
+                <div class="wellness-score-card">
+                    <div class="score-ring" id="wellnessScoreRing">
+                        <strong id="wellnessScore">—</strong>
+                        <span>/100</span>
+                    </div>
+                    <div class="score-copy">
+                        <span class="eyebrow">TODAY'S BALANCE</span>
+                        <h3 id="wellnessScoreTitle">Log a few habits to see your snapshot</h3>
+                        <p id="wellnessScoreText">MindMate looks at sleep, learning time, movement, hydration, meals, mood and energy. It is a reflection tool—not a medical score.</p>
+                        <button id="askInsightBtn" class="secondary" type="button">🤖 Ask MindMate about today</button>
+                    </div>
+                </div>
+
+                <div class="quick-panel panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h3>Quick check-in</h3>
+                            <span>Log a small habit in one tap</span>
+                        </div>
+                        <span class="today-label" id="todayLabel"></span>
+                    </div>
+                    <div class="quick-actions">
+                        <button type="button" class="quick-action" data-quick-water="1">💧 +1 water</button>
+                        <button type="button" class="quick-action" data-quick-water="2">💧 +2 water</button>
+                        <button type="button" class="quick-action" data-quick-activity="10">🚶 +10 min movement</button>
+                        <button type="button" class="quick-action" data-quick-study="25">📚 +25 min study</button>
+                        <button type="button" class="quick-action" data-quick-task="Take a break">⏸️ Break reminder</button>
+                    </div>
+                    <div class="quick-feedback" id="quickFeedback" aria-live="polite"></div>
+                </div>
+
+                <div class="stats">
+
+                    <!-- CURRENT MOOD -->
+
+                    <div class="stat-card">
+                       <span id="dashMoodEmoji">😊</span>
+
+                        <small>
+                            Current mood
+                        </small>
+
+                        <strong id="dashMood">
+                            —
+                        </strong>
+
+                        <button
+                            id="clearMoodBtn"
+                            class="clear-mood"
+                            type="button"
+                        >
+                            🗑 Reset Mood
+                        </button>
+
+                    </div>
+
+
+                    <!-- CONVERSATIONS -->
+
+                    <div class="stat-card">
+
+                        <span>💬</span>
+
+                        <small>
+                            Conversations
+                        </small>
+
+                        <strong id="chatCount">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <!-- MOOD CHECK-INS -->
+
+                    <div class="stat-card">
+
+                        <span>🌱</span>
+
+                        <small>
+                            Mood check-ins
+                        </small>
+
+                        <strong id="moodCount">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <!-- STREAK -->
+
+                    <div class="stat-card">
+
+                        <span>🔥</span>
+
+                        <small>
+                            Reflection streak
+                        </small>
+
+                        <strong id="streak">
+                            0 days
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="dashboard-grid">
+                    <div class="panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h3>7-day wellness rhythm</h3>
+                                <span>Your logged habits at a glance</span>
+                            </div>
+                        </div>
+                        <div id="wellnessWeek" class="wellness-week"></div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h3>Today's missions</h3>
+                                <span>Three small actions, no pressure</span>
+                            </div>
+                        </div>
+                        <div id="dailyMissions" class="daily-missions"></div>
+                    </div>
+                </div>
+
+
+                <div class="panel pattern-card">
+                    <div class="panel-heading">
+                        <div>
+                            <h3>🌟 Your pattern spotlight</h3>
+                            <span>A simple reflection from your recent logs</span>
+                        </div>
+                    </div>
+                    <div id="patternSpotlight" class="pattern-spotlight">Keep logging a few days and MindMate will surface a gentle pattern here.</div>
+                </div>
+
+                <!-- MOOD HISTORY -->
+
+                <div class="panel">
+
+                    <div class="panel-heading">
+
+                        <div>
+
+                            <h3>
+                                Mood history
+                            </h3>
+
+                            <span>
+                                Your recent check-ins
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="moodHistory"
+                        class="mood-history"
+                    ></div>
+
+                </div>
+
+
+                <!-- INSIGHT -->
+
+                <div class="insight-card">
+
+                    <div class="insight-icon">
+                        💡
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            MindMate reflection
+                        </h3>
+
+                        <p id="insightText">
+                            Add a few mood check-ins
+                            to see your personal reflection.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- TOOLKIT -->
+
+        <section
+            id="toolkitView"
+            class="view hidden"
+        >
+
+            <div class="toolkit">
+
+                <div class="section-heading">
+
+                    <span class="eyebrow">
+                        WELLNESS TOOLKIT
+                    </span>
+
+                    <h2>
+                        Small tools for everyday moments.
+                    </h2>
+
+                    <p>
+                        Choose something that feels useful right now.
+                    </p>
+
+                </div>
+
+
+                <div class="tool-grid">
+
+                    <button
+                        class="tool-card"
+                        id="breathingTool"
+                    >
+
+                        <div class="tool-icon">
+                            🫁
+                        </div>
+
+                        <h3>
+                            Breathing Space
+                        </h3>
+
+                        <p>
+                            A simple guided breathing exercise.
+                        </p>
+
+                    </button>
+
+
+                    <button
+                        class="tool-card"
+                        id="focusTool"
+                    >
+
+                        <div class="tool-icon">
+                            🎯
+                        </div>
+
+                        <h3>
+                            Focus Session
+                        </h3>
+
+                        <p>
+                            Set aside a short period for one task.
+                        </p>
+
+                    </button>
+
+
+                    <button
+                        class="tool-card"
+                        id="gratitudeTool"
+                    >
+
+                        <div class="tool-icon">
+                            🌻
+                        </div>
+
+                        <h3>
+                            Gratitude Prompt
+                        </h3>
+
+                        <p>
+                            A gentle prompt for positive reflection.
+                        </p>
+
+                    </button>
+
+
+                    <button
+                        class="tool-card"
+                        id="windDownTool"
+                    >
+
+                        <div class="tool-icon">
+                            🌙
+                        </div>
+
+                        <h3>
+                            Wind Down
+                        </h3>
+
+                        <p>
+                            Slow down and prepare for rest.
+                        </p>
+
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="toolResult"
+                    class="tool-result"
+                >
+                    Choose a tool above.
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- WELLNESS TRACKER -->
+
+        <section
+            id="trackerView"
+            class="view hidden"
+        >
+
+            <div class="tracker">
+
+                <div class="section-heading">
+                    <span class="eyebrow">DAILY WELLNESS TRACKER</span>
+                    <h2>Build a balanced day.</h2>
+                    <p>Track simple routines, check in with yourself, and set gentle reminders.</p>
+                    <div class="tracker-heading-actions">
+                        <button id="exportWellness" class="secondary" type="button">⬇️ Export my data</button>
+                    </div>
+                </div>
+
+                <div class="tracker-grid">
+
+                    <div class="tracker-card">
+                        <div class="tracker-card-head"><span>😴</span><div><h3>Sleep</h3><small>Rest and sleep routine</small></div></div>
+                        <div class="tracker-row"><input id="sleepHours" type="number" min="0" max="24" step="0.5" placeholder="Hours slept"><button class="primary" id="saveSleep">Save</button></div>
+                        <p class="tracker-value" id="sleepValue">Not logged today</p>
+                    </div>
+
+                    <div class="tracker-card">
+                        <div class="tracker-card-head"><span>📚</span><div><h3>Study / Screen Time</h3><small>Keep an eye on your day</small></div></div>
+                        <div class="tracker-row"><input id="studyMinutes" type="number" min="0" max="1440" placeholder="Minutes"><button class="primary" id="saveStudy">Save</button></div>
+                        <p class="tracker-value" id="studyValue">Not logged today</p>
+                    </div>
+
+                    <div class="tracker-card">
+                        <div class="tracker-card-head"><span>🚶</span><div><h3>Activity</h3><small>Movement or exercise</small></div></div>
+                        <div class="tracker-row"><input id="activityMinutes" type="number" min="0" max="1440" placeholder="Minutes"><button class="primary" id="saveActivity">Save</button></div>
+                        <p class="tracker-value" id="activityValue">Not logged today</p>
+                    </div>
+
+                    <div class="tracker-card">
+                        <div class="tracker-card-head"><span>💧</span><div><h3>Hydration</h3><small>Water throughout the day</small></div></div>
+                        <div class="tracker-row"><input id="waterGlasses" type="number" min="0" max="50" placeholder="Glasses"><button class="primary" id="saveWater">Save</button></div>
+                        <p class="tracker-value" id="waterValue">Not logged today</p>
+                    </div>
+
+                    <div class="tracker-card">
+                        <div class="tracker-card-head"><span>🍽️</span><div><h3>Meal Regularity</h3><small>Notice your eating routine</small></div></div>
+                        <div class="tracker-row"><select id="mealStatus"><option value="">Choose status</option><option>Regular</option><option>Mostly regular</option><option>Irregular</option><option>Skipped meals</option></select><button class="primary" id="saveMeals">Save</button></div>
+                        <p class="tracker-value" id="mealValue">Not logged today</p>
+                    </div>
+
+                    <div class="tracker-card">
+                        <div class="tracker-card-head"><span>😊</span><div><h3>Mood & Energy</h3><small>Quick self check-in</small></div></div>
+                        <div class="tracker-row"><select id="energyStatus"><option value="">Energy level</option><option>High</option><option>Good</option><option>Okay</option><option>Low</option></select><button class="primary" id="saveEnergy">Save</button></div>
+                        <p class="tracker-value" id="energyValue">Not logged today</p>
+                    </div>
+
+                    <div class="tracker-card tracker-wide">
+                        <div class="tracker-card-head"><span>🎯</span><div><h3>Personal Balance Plan</h3><small>Personalized around healthy routines, not numbers</small></div></div>
+                        <p class="tracker-note">Because you're still growing, MindMate avoids calorie or weight-target instructions. Choose what you want to improve and get a gentle habit plan.</p>
+                        <div class="goal-options" id="goalOptions">
+                            <button data-goal="energy">⚡ More steady energy</button>
+                            <button data-goal="routine">🌱 More consistent routine</button>
+                            <button data-goal="strength">💪 Support strength & activity</button>
+                            <button data-goal="balance">🧘 Overall balance</button>
+                        </div>
+                        <div id="goalPlan" class="goal-plan">Choose a goal to create your balance plan.</div>
+                    </div>
+
+                    <div class="tracker-card tracker-wide">
+                        <div class="tracker-card-head"><span>⏰</span><div><h3>Tasks & Reminders</h3><small>Get a browser alert when a scheduled task is overdue</small></div></div>
+                        <div class="reminder-form">
+                            <input id="taskName" type="text" maxlength="80" placeholder="e.g. Drink water / Take a break">
+                            <input id="taskTime" type="time">
+                            <button class="primary" id="addTask">Add Reminder</button>
+                        </div>
+                        <div class="reminder-actions"><button class="secondary" id="enableNotifications">🔔 Enable Notifications</button><span id="notificationStatus">Notifications not enabled</span></div>
+                        <div id="taskList" class="task-list"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- WELLNESS SUITE -->
+
+        <section
+            id="suiteView"
+            class="view hidden"
+        >
+            <div class="suite">
+
+                <div class="section-heading">
+                    <span class="eyebrow">ALL-IN-ONE WELLNESS SUITE</span>
+                    <h2>Everything in one place.</h2>
+                    <p>Activity, food, meditation, sleep, training, cycle awareness and a quick product check — all stored privately on this device, alongside MindMate chat.</p>
+                </div>
+
+                <div class="suite-tabs" id="suiteTabs">
+                    <button class="suite-tab active" data-tab="overview" type="button">📊 Overview</button>
+                    <button class="suite-tab" data-tab="activity" type="button">🏃 Activity</button>
+                    <button class="suite-tab" data-tab="nutrition" type="button">🍎 Nutrition</button>
+                    <button class="suite-tab" data-tab="meditate" type="button">🧘 Meditate</button>
+                    <button class="suite-tab" data-tab="sleep" type="button">😴 Sleep</button>
+                    <button class="suite-tab" data-tab="train" type="button">💪 Train</button>
+                    <button class="suite-tab" data-tab="cycle" type="button">🌸 Cycle</button>
+                    <button class="suite-tab" data-tab="scan" type="button">🔍 Scan</button>
+                    <button class="suite-tab" data-tab="talk" type="button">🗣️ Talk</button>
+                </div>
+
+                <!-- OVERVIEW -->
+                <div class="suite-panel" id="panel-overview" data-panel="overview">
+                    <div class="suite-grid" id="wsOverviewGrid"></div>
+                    <div class="suite-note">This overview pulls today's entries from every module below. Nothing leaves this device — it's all stored in your browser's local storage.</div>
+                </div>
+
+                <!-- ACTIVITY -->
+                <div class="suite-panel hidden" id="panel-activity" data-panel="activity">
+                    <div class="suite-card">
+                        <h3>🏃 Log an activity</h3>
+                        <div class="suite-form">
+                            <div>
+                                <label>Type</label>
+                                <select id="wsActType">
+                                    <option>Run</option>
+                                    <option>Walk</option>
+                                    <option>Cycle</option>
+                                    <option>Swim</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div><label>Distance (km)</label><input id="wsActDistance" type="number" min="0" step="0.01" placeholder="e.g. 5.2"></div>
+                            <div><label>Duration (min)</label><input id="wsActDuration" type="number" min="0" step="1" placeholder="e.g. 30"></div>
+                            <div><label>Your weight (kg, optional)</label><input id="wsWeight" type="number" min="0" step="1" placeholder="65"></div>
+                            <div style="grid-column:1/-1"><label>Notes</label><input id="wsActNotes" type="text" placeholder="How did it feel?"></div>
+                        </div>
+                        <div class="suite-actions" style="margin-top:12px">
+                            <button class="primary" id="wsActSave" type="button">Save activity</button>
+                        </div>
+                    </div>
+
+                    <div class="suite-grid">
+                        <div class="suite-card"><h3>This week</h3><div class="big" id="wsActWeekDist">0 km</div><div class="sub">total distance</div></div>
+                        <div class="suite-card"><h3>Sessions</h3><div class="big" id="wsActWeekCount">0</div><div class="sub">this week</div></div>
+                        <div class="suite-card"><h3>Calories (est.)</h3><div class="big" id="wsActWeekCal">0</div><div class="sub">this week</div></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>Last 7 days (km)</h3>
+                        <div class="suite-chart" id="wsActChart"></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>History</h3>
+                        <div class="suite-list" id="wsActList"></div>
+                    </div>
+                </div>
+
+                <!-- NUTRITION -->
+                <div class="suite-panel hidden" id="panel-nutrition" data-panel="nutrition">
+                    <div class="suite-card">
+                        <h3>🎯 Daily goals</h3>
+                        <div class="suite-form">
+                            <div><label>Calories</label><input id="wsGoalCal" type="number" min="0" placeholder="2000"></div>
+                            <div><label>Protein (g)</label><input id="wsGoalProtein" type="number" min="0" placeholder="90"></div>
+                            <div><label>Carbs (g)</label><input id="wsGoalCarbs" type="number" min="0" placeholder="220"></div>
+                            <div><label>Fat (g)</label><input id="wsGoalFat" type="number" min="0" placeholder="65"></div>
+                        </div>
+                        <div class="suite-actions" style="margin-top:12px"><button class="secondary" id="wsGoalSave" type="button">Save goals</button></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>🍽️ Log food</h3>
+                        <div class="suite-form">
+                            <div><label>Meal</label>
+                                <select id="wsMealType"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
+                            </div>
+                            <div style="grid-column:span 2"><label>Food name</label><input id="wsMealName" type="text" placeholder="e.g. Chicken & rice"></div>
+                            <div><label>Calories</label><input id="wsMealCal" type="number" min="0"></div>
+                            <div><label>Protein (g)</label><input id="wsMealProtein" type="number" min="0"></div>
+                            <div><label>Carbs (g)</label><input id="wsMealCarbs" type="number" min="0"></div>
+                            <div><label>Fat (g)</label><input id="wsMealFat" type="number" min="0"></div>
+                        </div>
+                        <div class="suite-actions" style="margin-top:12px"><button class="primary" id="wsMealSave" type="button">Add to today's log</button></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>Today's progress</h3>
+                        <div id="wsNutritionProgress"></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>Today's food log</h3>
+                        <div class="suite-list" id="wsMealList"></div>
+                    </div>
+                </div>
+
+                <!-- MEDITATE -->
+                <div class="suite-panel hidden" id="panel-meditate" data-panel="meditate">
+                    <div class="suite-card">
+                        <h3>🧘 Choose a session</h3>
+                        <div class="suite-tabgroup" id="wsMedCategories">
+                            <button class="suite-chip active" data-cat="Calm" type="button">🌊 Calm</button>
+                            <button class="suite-chip" data-cat="Focus" type="button">🎯 Focus</button>
+                            <button class="suite-chip" data-cat="Sleep" type="button">🌙 Sleep wind-down</button>
+                            <button class="suite-chip" data-cat="Anxiety Relief" type="button">🍃 Anxiety relief</button>
+                            <button class="suite-chip" data-cat="Breathing Basics" type="button">💨 Breathing basics</button>
+                        </div>
+                        <div class="suite-tabgroup" id="wsMedDurations" style="margin-top:12px">
+                            <button class="suite-chip active" data-min="3" type="button">3 min</button>
+                            <button class="suite-chip" data-min="5" type="button">5 min</button>
+                            <button class="suite-chip" data-min="10" type="button">10 min</button>
+                            <button class="suite-chip" data-min="15" type="button">15 min</button>
+                        </div>
+                        <div class="suite-actions" style="margin-top:14px">
+                            <button class="primary" id="wsMedStart" type="button">▶ Start session</button>
+                        </div>
+                    </div>
+
+                    <div class="suite-card hidden" id="wsMedTimerCard">
+                        <div class="med-timer">
+                            <div class="med-circle" id="wsMedCircle">05:00</div>
+                            <div class="suite-actions">
+                                <button class="secondary" id="wsMedPause" type="button">⏸ Pause</button>
+                                <button class="secondary" id="wsMedStop" type="button">⏹ End early</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="suite-grid">
+                        <div class="suite-card"><h3>This week</h3><div class="big" id="wsMedWeekMin">0 min</div><div class="sub">meditated</div></div>
+                        <div class="suite-card"><h3>Streak</h3><div class="big" id="wsMedStreak">0 days</div><div class="sub">keep it going</div></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>Session history</h3>
+                        <div class="suite-list" id="wsMedList"></div>
+                    </div>
+                </div>
+
+                <!-- SLEEP -->
+                <div class="suite-panel hidden" id="panel-sleep" data-panel="sleep">
+                    <div class="suite-card">
+                        <h3>😴 Log last night</h3>
+                        <div class="suite-form">
+                            <div><label>Bedtime</label><input id="wsSleepBed" type="time"></div>
+                            <div><label>Wake time</label><input id="wsSleepWake" type="time"></div>
+                            <div>
+                                <label>Quality</label>
+                                <select id="wsSleepQuality"><option value="5">⭐⭐⭐⭐⭐ Great</option><option value="4">⭐⭐⭐⭐ Good</option><option value="3" selected>⭐⭐⭐ Okay</option><option value="2">⭐⭐ Poor</option><option value="1">⭐ Rough</option></select>
+                            </div>
+                            <div style="grid-column:1/-1"><label>Notes</label><input id="wsSleepNotes" type="text" placeholder="Dreams, wake-ups, anything notable"></div>
+                        </div>
+                        <div class="suite-actions" style="margin-top:12px"><button class="primary" id="wsSleepSave" type="button">Save last night</button></div>
+                    </div>
+
+                    <div class="suite-grid">
+                        <div class="suite-card"><h3>Avg this week</h3><div class="big" id="wsSleepAvg">–</div><div class="sub">hours / night</div></div>
+                        <div class="suite-card"><h3>Sleep score</h3><div class="big" id="wsSleepScore">–</div><div class="sub">duration + quality</div></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>Last 7 nights (hours)</h3>
+                        <div class="suite-chart" id="wsSleepChart"></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>History</h3>
+                        <div class="suite-list" id="wsSleepList"></div>
+                    </div>
+                </div>
+
+                <!-- TRAIN -->
+                <div class="suite-panel hidden" id="panel-train" data-panel="train">
+                    <div class="suite-grid" id="wsPlanGrid"></div>
+                    <div class="suite-card hidden" id="wsPlanActive"></div>
+                    <div class="suite-card">
+                        <h3>Recently completed</h3>
+                        <div class="suite-list" id="wsWorkoutHistory"></div>
+                    </div>
+                </div>
+
+                <!-- CYCLE -->
+                <div class="suite-panel hidden" id="panel-cycle" data-panel="cycle">
+                    <div class="suite-note">🌸 Estimates only, based on simple averages — not medical or contraceptive advice. Cycles vary; track a few months for better accuracy, and check with a doctor for anything concerning.</div>
+
+                    <div class="suite-card">
+                        <h3>Cycle settings</h3>
+                        <div class="suite-form">
+                            <div><label>Last period start date</label><input id="wsCycleStart" type="date"></div>
+                            <div><label>Average period length (days)</label><input id="wsCyclePeriodLen" type="number" min="1" max="14" placeholder="5"></div>
+                            <div><label>Average cycle length (days)</label><input id="wsCycleLen" type="number" min="15" max="45" placeholder="28"></div>
+                        </div>
+                        <div class="suite-actions" style="margin-top:12px"><button class="primary" id="wsCycleSave" type="button">Save & calculate</button></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <div class="cycle-ring-wrap">
+                            <div class="score-ring" id="wsCycleRing"><strong id="wsCycleDay">–</strong><span>cycle day</span></div>
+                            <div>
+                                <div class="cycle-phase" id="wsCyclePhase">Log your last period to see predictions</div>
+                                <div class="sub" id="wsCycleNext" style="margin-top:6px;color:var(--muted)"></div>
+                                <div class="sub" id="wsCycleFertile" style="margin-top:2px;color:var(--muted)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>Log today</h3>
+                        <div class="suite-form">
+                            <div><label>Flow</label><select id="wsCycleFlow"><option value="">None</option><option>Spotting</option><option>Light</option><option>Medium</option><option>Heavy</option></select></div>
+                        </div>
+                        <div class="suite-tabgroup" id="wsCycleSymptoms" style="margin-top:10px">
+                            <button class="suite-chip" data-sym="Cramps" type="button">Cramps</button>
+                            <button class="suite-chip" data-sym="Headache" type="button">Headache</button>
+                            <button class="suite-chip" data-sym="Bloating" type="button">Bloating</button>
+                            <button class="suite-chip" data-sym="Fatigue" type="button">Fatigue</button>
+                            <button class="suite-chip" data-sym="Mood swings" type="button">Mood swings</button>
+                            <button class="suite-chip" data-sym="Acne" type="button">Acne</button>
+                        </div>
+                        <div class="suite-actions" style="margin-top:12px"><button class="secondary" id="wsCycleLogSave" type="button">Save today's log</button></div>
+                    </div>
+
+                    <div class="suite-card">
+                        <h3>Recent logs</h3>
+                        <div class="suite-list" id="wsCycleLogList"></div>
+                    </div>
+                </div>
+
+                <!-- SCAN -->
+                <div class="suite-panel hidden" id="panel-scan" data-panel="scan">
+                    <div class="suite-note">🔍 Manual health-score estimator — you type in the nutrition facts and it scores the product. It is not connected to any barcode database or camera, and it's a simple heuristic, not a certified nutrition rating.</div>
+
+                    <div class="suite-card">
+                        <h3>Score a product</h3>
+                        <div class="suite-form">
+                            <div style="grid-column:span 2"><label>Product name</label><input id="wsScanName" type="text" placeholder="e.g. Granola bar"></div>
+                            <div><label>Sugar (g / 100g)</label><input id="wsScanSugar" type="number" min="0"></div>
+                            <div><label>Saturated fat (g / 100g)</label><input id="wsScanSatFat" type="number" min="0"></div>
+                            <div><label>Sodium (mg / 100g)</label><input id="wsScanSodium" type="number" min="0"></div>
+                            <div><label>Fiber (g / 100g)</label><input id="wsScanFiber" type="number" min="0"></div>
+                            <div><label>Protein (g / 100g)</label><input id="wsScanProtein" type="number" min="0"></div>
+                            <div><label>Additives / ultra-processed ingredients (count)</label><input id="wsScanAdditives" type="number" min="0"></div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-top:18px">
+                                <input id="wsScanOrganic" type="checkbox" style="width:auto">
+                                <label style="margin:0">Organic / minimally processed</label>
+                            </div>
+                        </div>
+                        <div class="suite-actions" style="margin-top:12px"><button class="primary" id="wsScanCalc" type="button">Calculate score</button></div>
+                    </div>
+
+                    <div class="suite-card hidden" id="wsScanResult"></div>
+
+                    <div class="suite-card">
+                        <h3>Scan history</h3>
+                        <div class="suite-list" id="wsScanList"></div>
+                    </div>
+                </div>
+
+                <!-- TALK -->
+                <div class="suite-panel hidden" id="panel-talk" data-panel="talk">
+                    <div class="suite-note">🗣️ This opens a supportive check-in with MindMate's AI chat. It's a wellbeing companion for everyday reflection — not therapy, counseling, or crisis care. If you're in crisis or thinking about harming yourself, please contact local emergency services or a crisis line right away.</div>
+                    <div class="suite-card">
+                        <h3>Start a guided check-in</h3>
+                        <div class="suite-actions">
+                            <button class="secondary" data-talk="I'd like to talk about how my day went. Can you ask me a few gentle questions?" type="button">☀️ Talk about my day</button>
+                            <button class="secondary" data-talk="I'm feeling pretty stressed right now. Can you help me slow down and work through it?" type="button">😮‍💨 I'm feeling stressed</button>
+                            <button class="secondary" data-talk="I'm trying to process something difficult that happened. Can you help me think it through?" type="button">🧩 Process something difficult</button>
+                            <button class="secondary" data-talk="Can you just check in on me and see how I'm really doing today?" type="button">💚 Just check in on me</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- JOURNAL -->
+
+        <section
+            id="journalView"
+            class="view hidden"
+        >
+
+            <div class="journal">
+
+                <div class="section-heading">
+
+                    <span class="eyebrow">
+                        PRIVATE REFLECTION
+                    </span>
+
+                    <h2>
+                        Journal
+                    </h2>
+
+                    <p>
+                        Write what's on your mind.
+                        Your entries stay in this browser.
+                    </p>
+
+                </div>
+
+
+                <textarea
+                    id="journalInput"
+                    class="journal-input"
+                    placeholder="Start writing..."
+                ></textarea>
+
+
+                <div class="journal-actions">
+
+                    <button
+                        id="saveJournal"
+                        class="primary"
+                    >
+                        Save Entry
+                    </button>
+
+                    <button
+                        id="clearJournal"
+                        class="secondary"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="journalEntries"
+                    class="journal-entries"
+                ></div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- MOOD MODAL -->
+
+<div
+    id="moodModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card">
+
+        <button
+            id="closeMood"
+            class="close"
+        >
+            ×
+        </button>
+
+        <h2>
+            How are you feeling?
+        </h2>
+
+        <p>
+            Choose the mood that best describes your day.
+        </p>
+
+
+        <div class="moods">
+
+            <button data-mood="Happy">
+                😄
+                <span>Happy</span>
+            </button>
+
+            <button data-mood="Calm">
+                😌
+                <span>Calm</span>
+            </button>
+
+            <button data-mood="Okay">
+                🙂
+                <span>Okay</span>
+            </button>
+
+            <button data-mood="Sad">
+                😔
+                <span>Sad</span>
+            </button>
+
+            <button data-mood="Stressed">
+                😣
+                <span>Stressed</span>
+            </button>
+
+            <button data-mood="Angry">
+                😠
+                <span>Angry</span>
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- TOOL MODAL -->
+
+<div
+    id="toolModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card tool-modal">
+
+        <button
+            id="closeTool"
+            class="close"
+        >
+            ×
+        </button>
+
+        <div id="toolModalContent"></div>
+
+    </div>
+
+</div>
+
+
+<script src="/script.js"></script>
+<script>
+/* =========================================================
+   MINDMATE — WELLNESS SUITE
+   Adds: Activity (Strava-style), Nutrition (MyFitnessPal-style),
+   Meditate (Headspace-style), Sleep (Sleep Cycle-style),
+   Train (Nike Training Club-style), Cycle (period/ovulation),
+   Scan (manual product health score), Talk (AI check-in).
+
+   Everything here is stored locally in the browser via
+   localStorage and reuses the existing MindMate chat/AI
+   backend for the "Talk" tab. This file assumes script.js
+   has already loaded (todayKey, trackerData, saveTracker,
+   showView, sendMessage, input are all defined there).
+========================================================= */
+
+(function () {
+
+    /* ---------- generic helpers ---------- */
+
+    function wsLoad(key, fallback) {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function wsSave(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function wsId() {
+        return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()));
+    }
+
+    function wsToday() {
+        // reuse the same date-key format as the main tracker if available
+        if (typeof todayKey === "function") return todayKey();
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function wsDateKey(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+    }
+
+    function wsLastNDays(n) {
+        const out = [];
+        for (let i = n - 1; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            out.push(wsDateKey(d));
+        }
+        return out;
+    }
+
+    function wsShortLabel(key) {
+        const d = new Date(key + "T00:00:00");
+        return d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2);
+    }
+
+    function wsEl(id) { return document.getElementById(id); }
+
+    function wsClamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    /* ---------- storage keys ---------- */
+
+    const K_ACTIVITY = "mindmate_ws_activity";
+    const K_WEIGHT = "mindmate_ws_weight";
+    const K_NUT_GOALS = "mindmate_ws_nutrition_goals";
+    const K_NUT_LOG = "mindmate_ws_nutrition_log";
+    const K_MED = "mindmate_ws_meditation";
+    const K_SLEEP = "mindmate_ws_sleep";
+    const K_WORKOUTS = "mindmate_ws_workouts_log";
+    const K_CYCLE = "mindmate_ws_cycle";
+    const K_SCANS = "mindmate_ws_scans";
+
+    /* =========================================================
+       TAB SWITCHING (inside the Wellness Suite view)
+    ========================================================= */
+
+    function wsShowTab(tab) {
+        document.querySelectorAll(".suite-tab").forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.tab === tab);
+        });
+        document.querySelectorAll(".suite-panel").forEach(panel => {
+            panel.classList.toggle("hidden", panel.dataset.panel !== tab);
+        });
+        wsRenderAll();
+    }
+
+    document.querySelectorAll(".suite-tab").forEach(btn => {
+        btn.onclick = () => wsShowTab(btn.dataset.tab);
+    });
+
+    /* =========================================================
+       ACTIVITY  (Strava-style)
+    ========================================================= */
+
+    const METS = { Run: 9.8, Walk: 3.5, Cycle: 7.5, Swim: 6, Other: 5 };
+
+    function wsEstimateCalories(type, minutes) {
+        const weight = Number(wsLoad(K_WEIGHT, 65)) || 65;
+        const met = METS[type] || METS.Other;
+        return Math.round((met * 3.5 * weight / 200) * minutes);
+    }
+
+    function wsRenderActivity() {
+        const log = wsLoad(K_ACTIVITY, []);
+        const weight = wsLoad(K_WEIGHT, "");
+        if (wsEl("wsWeight") && !wsEl("wsWeight").value) wsEl("wsWeight").value = weight || "";
+
+        const days = wsLastNDays(7);
+        const byDay = {};
+        days.forEach(d => byDay[d] = 0);
+
+        let weekDist = 0, weekCount = 0, weekCal = 0;
+        log.forEach(entry => {
+            if (byDay[entry.date] !== undefined) {
+                byDay[entry.date] += Number(entry.distance) || 0;
+                weekDist += Number(entry.distance) || 0;
+                weekCount++;
+                weekCal += Number(entry.calories) || 0;
+            }
+        });
+
+        if (wsEl("wsActWeekDist")) wsEl("wsActWeekDist").textContent = weekDist.toFixed(1) + " km";
+        if (wsEl("wsActWeekCount")) wsEl("wsActWeekCount").textContent = weekCount;
+        if (wsEl("wsActWeekCal")) wsEl("wsActWeekCal").textContent = weekCal;
+
+        const maxDist = Math.max(1, ...Object.values(byDay));
+        const chart = wsEl("wsActChart");
+        if (chart) {
+            chart.innerHTML = days.map(d => {
+                const h = wsClamp((byDay[d] / maxDist) * 100, 3, 100);
+                return `<div class="bar" style="height:${h}%"><span>${wsShortLabel(d)}</span></div>`;
+            }).join("");
+        }
+
+        const list = wsEl("wsActList");
+        if (list) {
+            const recent = [...log].reverse().slice(0, 15);
+            list.innerHTML = recent.length ? recent.map(e => `
+                <div class="suite-row">
+                    <div class="row-main">
+                        <strong>${e.type} — ${Number(e.distance || 0).toFixed(2)} km</strong>
+                        <span>${e.date} · ${e.duration} min${e.pace ? " · " + e.pace + " min/km" : ""} · ~${e.calories} kcal${e.notes ? " · " + e.notes : ""}</span>
+                    </div>
+                    <button data-del="${e.id}" title="Delete">✕</button>
+                </div>
+            `).join("") : `<div class="suite-note">No activities logged yet.</div>`;
+
+            list.querySelectorAll("[data-del]").forEach(btn => {
+                btn.onclick = () => {
+                    const updated = wsLoad(K_ACTIVITY, []).filter(x => x.id !== btn.dataset.del);
+                    wsSave(K_ACTIVITY, updated);
+                    wsRenderActivity();
+                    wsRenderOverview();
+                };
+            });
+        }
+    }
+
+    const wsActSaveBtn = wsEl("wsActSave");
+    if (wsActSaveBtn) wsActSaveBtn.onclick = () => {
+        const type = wsEl("wsActType").value;
+        const distance = parseFloat(wsEl("wsActDistance").value) || 0;
+        const duration = parseFloat(wsEl("wsActDuration").value) || 0;
+        const notes = wsEl("wsActNotes").value.trim();
+        const weightVal = wsEl("wsWeight").value;
+
+        if (!duration) { alert("Please enter at least a duration."); return; }
+        if (weightVal) wsSave(K_WEIGHT, Number(weightVal));
+
+        const calories = wsEstimateCalories(type, duration);
+        const pace = distance > 0 ? (duration / distance).toFixed(2) : null;
+
+        const log = wsLoad(K_ACTIVITY, []);
+        log.push({ id: wsId(), date: wsToday(), type, distance, duration, pace, calories, notes });
+        wsSave(K_ACTIVITY, log);
+
+        // keep the classic tracker's "activity minutes" in sync too
+        if (typeof trackerData === "object" && typeof saveTracker === "function" && typeof todayKey === "function") {
+            const key = todayKey();
+            if (!trackerData[key]) trackerData[key] = {};
+            trackerData[key].activity = (Number(trackerData[key].activity) || 0) + duration;
+            saveTracker();
+        }
+
+        wsEl("wsActDistance").value = "";
+        wsEl("wsActDuration").value = "";
+        wsEl("wsActNotes").value = "";
+        wsRenderActivity();
+        wsRenderOverview();
+    };
+
+    /* =========================================================
+       NUTRITION  (MyFitnessPal-style)
+    ========================================================= */
+
+    function wsNutritionBar(label, value, goal, unit) {
+        const pct = goal > 0 ? wsClamp((value / goal) * 100, 0, 130) : 0;
+        const cls = pct > 105 ? "over" : (pct > 90 ? "warn" : "");
+        return `
+            <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+                    <span>${label}</span><span>${Math.round(value)} / ${goal || "–"} ${unit}</span>
+                </div>
+                <div class="suite-bar-track"><div class="suite-bar-fill ${cls}" style="width:${Math.min(pct,100)}%"></div></div>
+            </div>`;
+    }
+
+    function wsRenderNutrition() {
+        const goals = wsLoad(K_NUT_GOALS, { calories: 2000, protein: 90, carbs: 220, fat: 65 });
+        ["Cal", "Protein", "Carbs", "Fat"].forEach((k, i) => {
+            const ids = ["wsGoalCal", "wsGoalProtein", "wsGoalCarbs", "wsGoalFat"];
+            const keys = ["calories", "protein", "carbs", "fat"];
+            const el = wsEl(ids[i]);
+            if (el && !el.value) el.value = goals[keys[i]] || "";
+        });
+
+        const log = wsLoad(K_NUT_LOG, []);
+        const today = wsToday();
+        const todays = log.filter(e => e.date === today);
+
+        const totals = todays.reduce((acc, e) => {
+            acc.calories += Number(e.calories) || 0;
+            acc.protein += Number(e.protein) || 0;
+            acc.carbs += Number(e.carbs) || 0;
+            acc.fat += Number(e.fat) || 0;
+            return acc;
+        }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+        const progress = wsEl("wsNutritionProgress");
+        if (progress) {
+            progress.innerHTML =
+                wsNutritionBar("Calories", totals.calories, goals.calories, "kcal") +
+                wsNutritionBar("Protein", totals.protein, goals.protein, "g") +
+                wsNutritionBar("Carbs", totals.carbs, goals.carbs, "g") +
+                wsNutritionBar("Fat", totals.fat, goals.fat, "g");
+        }
+
+        const list = wsEl("wsMealList");
+        if (list) {
+            list.innerHTML = todays.length ? [...todays].reverse().map(e => `
+                <div class="suite-row">
+                    <div class="row-main">
+                        <strong>${e.name || "Food"} <span style="color:var(--muted)">(${e.mealType})</span></strong>
+                        <span>${e.calories} kcal · P${e.protein}g / C${e.carbs}g / F${e.fat}g</span>
+                    </div>
+                    <button data-del="${e.id}" title="Delete">✕</button>
+                </div>
+            `).join("") : `<div class="suite-note">No food logged today yet.</div>`;
+
+            list.querySelectorAll("[data-del]").forEach(btn => {
+                btn.onclick = () => {
+                    const updated = wsLoad(K_NUT_LOG, []).filter(x => x.id !== btn.dataset.del);
+                    wsSave(K_NUT_LOG, updated);
+                    wsRenderNutrition();
+                    wsRenderOverview();
+                };
+            });
+        }
+    }
+
+    const wsGoalSaveBtn = wsEl("wsGoalSave");
+    if (wsGoalSaveBtn) wsGoalSaveBtn.onclick = () => {
+        wsSave(K_NUT_GOALS, {
+            calories: Number(wsEl("wsGoalCal").value) || 2000,
+            protein: Number(wsEl("wsGoalProtein").value) || 90,
+            carbs: Number(wsEl("wsGoalCarbs").value) || 220,
+            fat: Number(wsEl("wsGoalFat").value) || 65
+        });
+        wsRenderNutrition();
+    };
+
+    const wsMealSaveBtn = wsEl("wsMealSave");
+    if (wsMealSaveBtn) wsMealSaveBtn.onclick = () => {
+        const name = wsEl("wsMealName").value.trim();
+        const calories = Number(wsEl("wsMealCal").value) || 0;
+        if (!name && !calories) { alert("Add a food name or calories first."); return; }
+
+        const log = wsLoad(K_NUT_LOG, []);
+        log.push({
+            id: wsId(),
+            date: wsToday(),
+            mealType: wsEl("wsMealType").value,
+            name,
+            calories,
+            protein: Number(wsEl("wsMealProtein").value) || 0,
+            carbs: Number(wsEl("wsMealCarbs").value) || 0,
+            fat: Number(wsEl("wsMealFat").value) || 0
+        });
+        wsSave(K_NUT_LOG, log);
+
+        ["wsMealName", "wsMealCal", "wsMealProtein", "wsMealCarbs", "wsMealFat"].forEach(id => wsEl(id).value = "");
+        wsRenderNutrition();
+        wsRenderOverview();
+    };
+
+    /* =========================================================
+       MEDITATE  (Headspace-style)
+    ========================================================= */
+
+    let wsMedTimerHandle = null;
+    let wsMedRemaining = 0;
+    let wsMedTotal = 0;
+    let wsMedCategory = "Calm";
+    let wsMedPaused = false;
+
+    document.querySelectorAll("#wsMedCategories .suite-chip").forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll("#wsMedCategories .suite-chip").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            wsMedCategory = btn.dataset.cat;
+        };
+    });
+
+    let wsMedMinutes = 3;
+    document.querySelectorAll("#wsMedDurations .suite-chip").forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll("#wsMedDurations .suite-chip").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            wsMedMinutes = Number(btn.dataset.min);
+        };
+    });
+
+    function wsFormatMMSS(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function wsMedTick() {
+        if (wsMedPaused) return;
+        wsMedRemaining--;
+        const circle = wsEl("wsMedCircle");
+        if (circle) circle.textContent = wsFormatMMSS(Math.max(0, wsMedRemaining));
+        if (wsMedRemaining <= 0) {
+            clearInterval(wsMedTimerHandle);
+            wsMedTimerHandle = null;
+            wsFinishMeditation();
+        }
+    }
+
+    function wsFinishMeditation() {
+        const log = wsLoad(K_MED, []);
+        log.push({ id: wsId(), date: wsToday(), category: wsMedCategory, minutes: wsMedTotal });
+        wsSave(K_MED, log);
+        const card = wsEl("wsMedTimerCard");
+        if (card) card.classList.add("hidden");
+        const circle = wsEl("wsMedCircle");
+        if (circle) circle.classList.remove("breathe");
+        wsRenderMeditate();
+        wsRenderOverview();
+    }
+
+    const wsMedStartBtn = wsEl("wsMedStart");
+    if (wsMedStartBtn) wsMedStartBtn.onclick = () => {
+        wsMedTotal = wsMedMinutes;
+        wsMedRemaining = wsMedMinutes * 60;
+        wsMedPaused = false;
+        const card = wsEl("wsMedTimerCard");
+        const circle = wsEl("wsMedCircle");
+        if (card) card.classList.remove("hidden");
+        if (circle) {
+            circle.textContent = wsFormatMMSS(wsMedRemaining);
+            circle.classList.add("breathe");
+        }
+        if (wsMedTimerHandle) clearInterval(wsMedTimerHandle);
+        wsMedTimerHandle = setInterval(wsMedTick, 1000);
+    };
+
+    const wsMedPauseBtn = wsEl("wsMedPause");
+    if (wsMedPauseBtn) wsMedPauseBtn.onclick = () => {
+        wsMedPaused = !wsMedPaused;
+        wsMedPauseBtn.textContent = wsMedPaused ? "▶ Resume" : "⏸ Pause";
+        const circle = wsEl("wsMedCircle");
+        if (circle) circle.classList.toggle("breathe", !wsMedPaused);
+    };
+
+    const wsMedStopBtn = wsEl("wsMedStop");
+    if (wsMedStopBtn) wsMedStopBtn.onclick = () => {
+        if (wsMedTimerHandle) clearInterval(wsMedTimerHandle);
+        wsMedTimerHandle = null;
+        const elapsedMin = Math.max(1, Math.round((wsMedTotal * 60 - wsMedRemaining) / 60));
+        wsMedTotal = elapsedMin;
+        wsFinishMeditation();
+    };
+
+    function wsRenderMeditate() {
+        const log = wsLoad(K_MED, []);
+        const days = wsLastNDays(7);
+        const thisWeek = log.filter(e => days.includes(e.date));
+        const weekMin = thisWeek.reduce((s, e) => s + (Number(e.minutes) || 0), 0);
+        if (wsEl("wsMedWeekMin")) wsEl("wsMedWeekMin").textContent = weekMin + " min";
+
+        // streak: consecutive days (including today) with at least one session
+        let streak = 0;
+        for (let i = 0; i < 60; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const key = wsDateKey(d);
+            if (log.some(e => e.date === key)) streak++;
+            else break;
+        }
+        if (wsEl("wsMedStreak")) wsEl("wsMedStreak").textContent = streak + " day" + (streak === 1 ? "" : "s");
+
+        const list = wsEl("wsMedList");
+        if (list) {
+            const recent = [...log].reverse().slice(0, 15);
+            list.innerHTML = recent.length ? recent.map(e => `
+                <div class="suite-row">
+                    <div class="row-main"><strong>${e.category}</strong><span>${e.date} · ${e.minutes} min</span></div>
+                </div>
+            `).join("") : `<div class="suite-note">No sessions yet — start one above.</div>`;
+        }
+    }
+
+    /* =========================================================
+       SLEEP  (Sleep Cycle-style)
+    ========================================================= */
+
+    function wsSleepDuration(bed, wake) {
+        if (!bed || !wake) return null;
+        const [bh, bm] = bed.split(":").map(Number);
+        const [wh, wm] = wake.split(":").map(Number);
+        let bedMinutes = bh * 60 + bm;
+        let wakeMinutes = wh * 60 + wm;
+        if (wakeMinutes <= bedMinutes) wakeMinutes += 24 * 60;
+        return (wakeMinutes - bedMinutes) / 60;
+    }
+
+    function wsSleepScoreFor(hours, quality) {
+        if (hours == null) return null;
+        const durationScore = wsClamp(100 - Math.abs(hours - 8) * 18, 0, 100);
+        const qualityScore = (Number(quality) || 3) * 20;
+        return Math.round(durationScore * 0.6 + qualityScore * 0.4);
+    }
+
+    const wsSleepSaveBtn = wsEl("wsSleepSave");
+    if (wsSleepSaveBtn) wsSleepSaveBtn.onclick = () => {
+        const bed = wsEl("wsSleepBed").value;
+        const wake = wsEl("wsSleepWake").value;
+        const quality = wsEl("wsSleepQuality").value;
+        const notes = wsEl("wsSleepNotes").value.trim();
+        const hours = wsSleepDuration(bed, wake);
+
+        if (hours == null) { alert("Please enter both a bedtime and a wake time."); return; }
+
+        const log = wsLoad(K_SLEEP, []).filter(e => e.date !== wsToday());
+        log.push({ id: wsId(), date: wsToday(), bed, wake, hours: Number(hours.toFixed(2)), quality, notes });
+        wsSave(K_SLEEP, log);
+
+        if (typeof trackerData === "object" && typeof saveTracker === "function" && typeof todayKey === "function") {
+            const key = todayKey();
+            if (!trackerData[key]) trackerData[key] = {};
+            trackerData[key].sleep = Number(hours.toFixed(1));
+            saveTracker();
+        }
+
+        wsEl("wsSleepNotes").value = "";
+        wsRenderSleep();
+        wsRenderOverview();
+    };
+
+    function wsRenderSleep() {
+        const log = wsLoad(K_SLEEP, []);
+        const days = wsLastNDays(7);
+        const byDay = {};
+        days.forEach(d => byDay[d] = null);
+        log.forEach(e => { if (byDay[e.date] !== undefined) byDay[e.date] = e.hours; });
+
+        const nights = Object.values(byDay).filter(v => v != null);
+        const avg = nights.length ? nights.reduce((a, b) => a + b, 0) / nights.length : null;
+        if (wsEl("wsSleepAvg")) wsEl("wsSleepAvg").textContent = avg != null ? avg.toFixed(1) + "h" : "–";
+
+        const last = [...log].reverse()[0];
+        const score = last ? wsSleepScoreFor(last.hours, last.quality) : null;
+        if (wsEl("wsSleepScore")) wsEl("wsSleepScore").textContent = score != null ? score : "–";
+
+        const maxH = Math.max(1, ...nights, 9);
+        const chart = wsEl("wsSleepChart");
+        if (chart) {
+            chart.innerHTML = days.map(d => {
+                const v = byDay[d];
+                const h = v != null ? wsClamp((v / maxH) * 100, 3, 100) : 2;
+                return `<div class="bar" style="height:${h}%;opacity:${v != null ? 1 : 0.25}"><span>${wsShortLabel(d)}</span></div>`;
+            }).join("");
+        }
+
+        const list = wsEl("wsSleepList");
+        if (list) {
+            const recent = [...log].reverse().slice(0, 10);
+            list.innerHTML = recent.length ? recent.map(e => `
+                <div class="suite-row">
+                    <div class="row-main">
+                        <strong>${e.hours}h · ${"⭐".repeat(Number(e.quality) || 3)}</strong>
+                        <span>${e.date} · ${e.bed || "?"} → ${e.wake || "?"}${e.notes ? " · " + e.notes : ""}</span>
+                    </div>
+                    <button data-del="${e.id}" title="Delete">✕</button>
+                </div>
+            `).join("") : `<div class="suite-note">No sleep logged yet.</div>`;
+
+            list.querySelectorAll("[data-del]").forEach(btn => {
+                btn.onclick = () => {
+                    const updated = wsLoad(K_SLEEP, []).filter(x => x.id !== btn.dataset.del);
+                    wsSave(K_SLEEP, updated);
+                    wsRenderSleep();
+                    wsRenderOverview();
+                };
+            });
+        }
+    }
+
+    /* =========================================================
+       TRAIN  (Nike Training Club-style)
+    ========================================================= */
+
+    const WORKOUT_PLANS = [
+        { name: "Full Body Basics", icon: "🏋️", exercises: ["Bodyweight squats — 3x15", "Push-ups — 3x10", "Glute bridges — 3x15", "Plank — 3x30s", "Walking lunges — 2x10 each leg"] },
+        { name: "Upper Body Strength", icon: "💪", exercises: ["Push-ups — 4x10", "Dumbbell rows — 3x12", "Shoulder press — 3x10", "Tricep dips — 3x12", "Bicep curls — 3x12"] },
+        { name: "Core Blast", icon: "🔥", exercises: ["Crunches — 3x20", "Plank — 3x40s", "Russian twists — 3x20", "Leg raises — 3x15", "Mountain climbers — 3x20"] },
+        { name: "Yoga Flow", icon: "🧘‍♀️", exercises: ["Sun salutation — 5 rounds", "Downward dog — 1 min", "Warrior II — 30s each side", "Child's pose — 1 min", "Seated twist — 30s each side"] },
+        { name: "HIIT Cardio", icon: "⚡", exercises: ["Jumping jacks — 40s", "High knees — 40s", "Burpees — 30s", "Rest — 20s", "Repeat circuit x4"] }
+    ];
+
+    let wsActivePlanIndex = null;
+
+    function wsRenderPlanGrid() {
+        const grid = wsEl("wsPlanGrid");
+        if (!grid) return;
+        grid.innerHTML = WORKOUT_PLANS.map((p, i) => `
+            <div class="plan-card">
+                <h3>${p.icon} ${p.name}</h3>
+                <div class="sub" style="margin-bottom:10px">${p.exercises.length} exercises</div>
+                <button class="primary" data-plan="${i}" type="button">Start workout</button>
+            </div>
+        `).join("");
+
+        grid.querySelectorAll("[data-plan]").forEach(btn => {
+            btn.onclick = () => wsStartPlan(Number(btn.dataset.plan));
+        });
+    }
+
+    function wsStartPlan(i) {
+        wsActivePlanIndex = i;
+        const plan = WORKOUT_PLANS[i];
+        const card = wsEl("wsPlanActive");
+        card.classList.remove("hidden");
+        card.innerHTML = `
+            <h3>${plan.icon} ${plan.name}</h3>
+            <div id="wsPlanExercises"></div>
+            <div class="suite-actions" style="margin-top:14px">
+                <button class="primary" id="wsPlanComplete" type="button">✅ Mark workout complete</button>
+                <button class="secondary" id="wsPlanCancel" type="button">Cancel</button>
+            </div>
+        `;
+        const exWrap = wsEl("wsPlanExercises");
+        exWrap.innerHTML = plan.exercises.map((ex, idx) => `
+            <div class="exercise-row" id="wsEx-${idx}">
+                <input type="checkbox" data-ex="${idx}">
+                <span>${ex}</span>
+            </div>
+        `).join("");
+        exWrap.querySelectorAll("input[type=checkbox]").forEach(cb => {
+            cb.onchange = () => wsEl(`wsEx-${cb.dataset.ex}`).classList.toggle("done", cb.checked);
+        });
+
+        wsEl("wsPlanCancel").onclick = () => { card.classList.add("hidden"); wsActivePlanIndex = null; };
+        wsEl("wsPlanComplete").onclick = () => {
+            const checked = exWrap.querySelectorAll("input:checked").length;
+            const log = wsLoad(K_WORKOUTS, []);
+            log.push({ id: wsId(), date: wsToday(), planName: plan.name, exercisesCompleted: checked, totalExercises: plan.exercises.length });
+            wsSave(K_WORKOUTS, log);
+            card.classList.add("hidden");
+            wsActivePlanIndex = null;
+            wsRenderTrain();
+            wsRenderOverview();
+        };
+    }
+
+    function wsRenderTrain() {
+        wsRenderPlanGrid();
+        const list = wsEl("wsWorkoutHistory");
+        if (list) {
+            const log = wsLoad(K_WORKOUTS, []);
+            const recent = [...log].reverse().slice(0, 10);
+            list.innerHTML = recent.length ? recent.map(e => `
+                <div class="suite-row">
+                    <div class="row-main"><strong>${e.planName}</strong><span>${e.date} · ${e.exercisesCompleted}/${e.totalExercises} exercises done</span></div>
+                </div>
+            `).join("") : `<div class="suite-note">No workouts completed yet.</div>`;
+        }
+    }
+
+    /* =========================================================
+       CYCLE  (period + ovulation awareness)
+    ========================================================= */
+
+    function wsCycleData() {
+        return wsLoad(K_CYCLE, { lastPeriodStart: "", periodLength: 5, cycleLength: 28, logs: [] });
+    }
+
+    const wsCycleSaveBtn = wsEl("wsCycleSave");
+    if (wsCycleSaveBtn) wsCycleSaveBtn.onclick = () => {
+        const data = wsCycleData();
+        data.lastPeriodStart = wsEl("wsCycleStart").value || data.lastPeriodStart;
+        data.periodLength = Number(wsEl("wsCyclePeriodLen").value) || 5;
+        data.cycleLength = Number(wsEl("wsCycleLen").value) || 28;
+        wsSave(K_CYCLE, data);
+        wsRenderCycle();
+        wsRenderOverview();
+    };
+
+    document.querySelectorAll("#wsCycleSymptoms .suite-chip").forEach(btn => {
+        btn.onclick = () => btn.classList.toggle("active");
+    });
+
+    const wsCycleLogSaveBtn = wsEl("wsCycleLogSave");
+    if (wsCycleLogSaveBtn) wsCycleLogSaveBtn.onclick = () => {
+        const data = wsCycleData();
+        const symptoms = [...document.querySelectorAll("#wsCycleSymptoms .suite-chip.active")].map(b => b.dataset.sym);
+        const flow = wsEl("wsCycleFlow").value;
+        data.logs = (data.logs || []).filter(l => l.date !== wsToday());
+        data.logs.push({ date: wsToday(), flow, symptoms });
+        wsSave(K_CYCLE, data);
+        wsRenderCycle();
+    };
+
+    function wsCyclePrediction(data) {
+        if (!data.lastPeriodStart) return null;
+        const start = new Date(data.lastPeriodStart + "T00:00:00");
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const msPerDay = 86400000;
+        let diffDays = Math.floor((today - start) / msPerDay);
+        const cycleLen = data.cycleLength || 28;
+        const periodLen = data.periodLength || 5;
+
+        let cycleDay = ((diffDays % cycleLen) + cycleLen) % cycleLen + 1;
+        const cyclesPassed = Math.floor(diffDays / cycleLen);
+        const nextPeriodStart = new Date(start.getTime() + (cyclesPassed + 1) * cycleLen * msPerDay);
+        const ovulationDay = cycleLen - 14; // cycle-day number, approx
+        const fertileStart = Math.max(1, ovulationDay - 5);
+        const fertileEnd = ovulationDay + 1;
+
+        let phase;
+        if (cycleDay <= periodLen) phase = "🩸 Menstrual phase";
+        else if (cycleDay === ovulationDay) phase = "🥚 Estimated ovulation day";
+        else if (cycleDay >= fertileStart && cycleDay <= fertileEnd) phase = "🌸 Fertile window";
+        else if (cycleDay < ovulationDay) phase = "🌱 Follicular phase";
+        else phase = "🌙 Luteal phase";
+
+        return { cycleDay, nextPeriodStart, ovulationDay, fertileStart, fertileEnd, phase };
+    }
+
+    function wsRenderCycle() {
+        const data = wsCycleData();
+        if (wsEl("wsCycleStart") && !wsEl("wsCycleStart").value) wsEl("wsCycleStart").value = data.lastPeriodStart || "";
+        if (wsEl("wsCyclePeriodLen") && !wsEl("wsCyclePeriodLen").value) wsEl("wsCyclePeriodLen").value = data.periodLength || 5;
+        if (wsEl("wsCycleLen") && !wsEl("wsCycleLen").value) wsEl("wsCycleLen").value = data.cycleLength || 28;
+
+        const pred = wsCyclePrediction(data);
+        const ring = wsEl("wsCycleRing");
+        if (pred) {
+            if (wsEl("wsCycleDay")) wsEl("wsCycleDay").textContent = "Day " + pred.cycleDay;
+            if (wsEl("wsCyclePhase")) wsEl("wsCyclePhase").textContent = pred.phase;
+            if (wsEl("wsCycleNext")) wsEl("wsCycleNext").textContent = "Next period expected: " + pred.nextPeriodStart.toDateString();
+            if (wsEl("wsCycleFertile")) wsEl("wsCycleFertile").textContent = `Fertile window: cycle days ${pred.fertileStart}–${pred.fertileEnd}`;
+            if (ring) ring.style.setProperty("--score", wsClamp((pred.cycleDay / (data.cycleLength || 28)) * 100, 0, 100) + "%");
+        } else {
+            if (wsEl("wsCyclePhase")) wsEl("wsCyclePhase").textContent = "Log your last period to see predictions";
+            if (wsEl("wsCycleNext")) wsEl("wsCycleNext").textContent = "";
+            if (wsEl("wsCycleFertile")) wsEl("wsCycleFertile").textContent = "";
+        }
+
+        const list = wsEl("wsCycleLogList");
+        if (list) {
+            const logs = [...(data.logs || [])].reverse().slice(0, 10);
+            list.innerHTML = logs.length ? logs.map(l => `
+                <div class="suite-row">
+                    <div class="row-main"><strong>${l.flow || "No flow logged"}</strong><span>${l.date}${l.symptoms && l.symptoms.length ? " · " + l.symptoms.join(", ") : ""}</span></div>
+                </div>
+            `).join("") : `<div class="suite-note">No daily logs yet.</div>`;
+        }
+    }
+
+    /* =========================================================
+       SCAN  (Yuka-style manual product health score)
+    ========================================================= */
+
+    function wsScanScore(vals) {
+        let score = 100;
+        score -= wsClamp(vals.sugar, 0, 100) * 1.2;
+        score -= wsClamp(vals.satFat, 0, 100) * 2.2;
+        score -= wsClamp(vals.sodium, 0, 2000) / 40;
+        score -= vals.additives * 4;
+        score += Math.min(15, vals.fiber * 1.5);
+        score += Math.min(10, vals.protein * 1);
+        if (vals.organic) score += 5;
+        score = Math.round(wsClamp(score, 0, 100));
+
+        let rating, cls;
+        if (score >= 80) { rating = "Excellent"; cls = "excellent"; }
+        else if (score >= 60) { rating = "Good"; cls = "good"; }
+        else if (score >= 40) { rating = "Mediocre"; cls = "mediocre"; }
+        else { rating = "Poor"; cls = "poor"; }
+
+        const reasons = [];
+        if (vals.sugar >= 15) reasons.push("High in sugar");
+        else if (vals.sugar <= 5) reasons.push("Low sugar");
+        if (vals.satFat >= 5) reasons.push("High in saturated fat");
+        if (vals.sodium >= 600) reasons.push("High in sodium");
+        if (vals.additives >= 3) reasons.push("Several additives / ultra-processed ingredients");
+        if (vals.fiber >= 5) reasons.push("Good source of fiber");
+        if (vals.protein >= 10) reasons.push("Good source of protein");
+        if (vals.organic) reasons.push("Organic / minimally processed");
+        if (!reasons.length) reasons.push("No standout concerns based on the numbers entered");
+
+        return { score, rating, cls, reasons };
+    }
+
+    const wsScanCalcBtn = wsEl("wsScanCalc");
+    if (wsScanCalcBtn) wsScanCalcBtn.onclick = () => {
+        const vals = {
+            sugar: Number(wsEl("wsScanSugar").value) || 0,
+            satFat: Number(wsEl("wsScanSatFat").value) || 0,
+            sodium: Number(wsEl("wsScanSodium").value) || 0,
+            fiber: Number(wsEl("wsScanFiber").value) || 0,
+            protein: Number(wsEl("wsScanProtein").value) || 0,
+            additives: Number(wsEl("wsScanAdditives").value) || 0,
+            organic: wsEl("wsScanOrganic").checked
+        };
+        const name = wsEl("wsScanName").value.trim() || "Unnamed product";
+        const result = wsScanScore(vals);
+
+        const resultCard = wsEl("wsScanResult");
+        resultCard.classList.remove("hidden");
+        resultCard.innerHTML = `
+            <h3>${name}</h3>
+            <div style="display:flex;align-items:center;gap:14px;margin:10px 0">
+                <div class="big">${result.score}/100</div>
+                <span class="suite-badge ${result.cls}">${result.rating}</span>
+            </div>
+            <ul style="padding-left:18px;color:var(--muted);font-size:12.5px;line-height:1.6">
+                ${result.reasons.map(r => `<li>${r}</li>`).join("")}
+            </ul>
+        `;
+
+        const log = wsLoad(K_SCANS, []);
+        log.push({ id: wsId(), date: wsToday(), name, score: result.score, rating: result.rating });
+        wsSave(K_SCANS, log);
+        wsRenderScan();
+        wsRenderOverview();
+    };
+
+    function wsRenderScan() {
+        const list = wsEl("wsScanList");
+        if (!list) return;
+        const log = wsLoad(K_SCANS, []);
+        const recent = [...log].reverse().slice(0, 12);
+        list.innerHTML = recent.length ? recent.map(e => `
+            <div class="suite-row">
+                <div class="row-main"><strong>${e.name}</strong><span>${e.date} · ${e.rating}</span></div>
+                <div class="suite-badge ${e.score >= 80 ? "excellent" : e.score >= 60 ? "good" : e.score >= 40 ? "mediocre" : "poor"}">${e.score}</div>
+            </div>
+        `).join("") : `<div class="suite-note">No products scored yet.</div>`;
+    }
+
+    /* =========================================================
+       TALK  (BetterHelp-style AI check-in hand-off)
+    ========================================================= */
+
+    document.querySelectorAll("[data-talk]").forEach(btn => {
+        btn.onclick = () => {
+            if (typeof showView === "function") showView("chat");
+            if (input) {
+                input.value = btn.dataset.talk;
+                if (typeof sendMessage === "function") sendMessage();
+            }
+        };
+    });
+
+    /* =========================================================
+       OVERVIEW  (Samsung Health-style aggregator)
+    ========================================================= */
+
+    function wsRenderOverview() {
+        const grid = wsEl("wsOverviewGrid");
+        if (!grid) return;
+
+        const today = wsToday();
+
+        const actToday = wsLoad(K_ACTIVITY, []).filter(e => e.date === today);
+        const actMinutes = actToday.reduce((s, e) => s + (Number(e.duration) || 0), 0);
+        const actDistance = actToday.reduce((s, e) => s + (Number(e.distance) || 0), 0);
+
+        const nutToday = wsLoad(K_NUT_LOG, []).filter(e => e.date === today);
+        const cals = nutToday.reduce((s, e) => s + (Number(e.calories) || 0), 0);
+        const nutGoals = wsLoad(K_NUT_GOALS, { calories: 2000 });
+
+        const medLog = wsLoad(K_MED, []);
+        const medToday = medLog.filter(e => e.date === today).reduce((s, e) => s + (Number(e.minutes) || 0), 0);
+
+        const sleepLog = wsLoad(K_SLEEP, []);
+        const lastSleep = [...sleepLog].reverse()[0];
+
+        const workoutLog = wsLoad(K_WORKOUTS, []);
+        const days7 = wsLastNDays(7);
+        const workoutsWeek = workoutLog.filter(e => days7.includes(e.date)).length;
+
+        const cycleData = wsCycleData();
+        const cyclePred = wsCyclePrediction(cycleData);
+
+        const scanLog = wsLoad(K_SCANS, []);
+        const lastScan = [...scanLog].reverse()[0];
+
+        const cards = [
+            { icon: "🏃", label: "Activity today", value: actMinutes ? `${actMinutes} min` : "Not logged", sub: actDistance ? `${actDistance.toFixed(1)} km` : "" },
+            { icon: "🍎", label: "Calories today", value: cals ? `${cals} kcal` : "Not logged", sub: nutGoals.calories ? `goal ${nutGoals.calories} kcal` : "" },
+            { icon: "🧘", label: "Meditation today", value: medToday ? `${medToday} min` : "Not logged", sub: "" },
+            { icon: "😴", label: "Last night's sleep", value: lastSleep ? `${lastSleep.hours}h` : "Not logged", sub: lastSleep ? "⭐".repeat(Number(lastSleep.quality) || 0) : "" },
+            { icon: "💪", label: "Workouts this week", value: workoutsWeek, sub: "" },
+            { icon: "🌸", label: "Cycle", value: cyclePred ? `Day ${cyclePred.cycleDay}` : "Not set up", sub: cyclePred ? cyclePred.phase : "" },
+            { icon: "🔍", label: "Last product scan", value: lastScan ? `${lastScan.score}/100` : "None yet", sub: lastScan ? lastScan.name : "" }
+        ];
+
+        grid.innerHTML = cards.map(c => `
+            <div class="suite-card">
+                <h3>${c.icon} ${c.label}</h3>
+                <div class="big">${c.value}</div>
+                ${c.sub ? `<div class="sub">${c.sub}</div>` : ""}
+            </div>
+        `).join("");
+    }
+
+    /* =========================================================
+       RENDER-ALL + HOOK INTO MAIN NAVIGATION
+    ========================================================= */
+
+    function wsRenderAll() {
+        wsRenderOverview();
+        wsRenderActivity();
+        wsRenderNutrition();
+        wsRenderMeditate();
+        wsRenderSleep();
+        wsRenderTrain();
+        wsRenderCycle();
+        wsRenderScan();
+    }
+
+    // Register the new view with the existing nav system (same pattern
+    // the app already uses for the Wellness Tracker view).
+    if (typeof views === "object") {
+        views.suite = document.getElementById("suiteView");
+    }
+
+    if (typeof showView === "function") {
+        const wsPreviousShowView = showView;
+        showView = function (name) {
+            wsPreviousShowView(name);
+            if (name === "suite") {
+                const title = document.getElementById("pageTitle");
+                if (title) title.textContent = "Wellness Suite";
+                wsRenderAll();
+            }
+        };
+    }
+
+    // initial paint in case the suite tab is opened first
+    wsRenderAll();
+
+})();
+
+</script>
+
+
+<!-- MindMate Wellness quick access -->
+<button id="wellnessQuickNav" class="wellness-quick-nav" type="button"
+        onclick="document.getElementById('wellnessTracker')?.scrollIntoView({behavior:'smooth'})">
+  💚 Wellness Tracker
+</button>
+<style>
+.wellness-quick-nav{
+  position:fixed;right:18px;bottom:18px;z-index:9999;
+  padding:11px 15px;border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;background:var(--panel2,#151b2b);
+  color:var(--text,#fff);font-weight:700;box-shadow:0 8px 28px rgba(0,0,0,.28);
+}
+.wellness-quick-nav:hover{border-color:var(--accent,#7c6cff);transform:translateY(-1px)}
+</style>
+
+
+<script>
+(function(){
+  const screen=document.getElementById('mindmateWelcome');
+  const app=document.getElementById('mindmateApp');
+  const btn=document.getElementById('enterMindMate');
+  if(!screen || !app || !btn) return;
+  app.classList.add('mindmate-app-behind');
+  btn.addEventListener('click',function(){
+    screen.classList.add('is-hidden');
+    app.classList.remove('mindmate-app-behind');
+    setTimeout(function(){screen.remove();},600);
+  });
+})();
+</script>
+<style>.mindmate-app-behind{filter:blur(7px);transform:scale(.995);transition:filter .5s ease,transform .5s ease}</style>
+
+</body>
+
+</html>

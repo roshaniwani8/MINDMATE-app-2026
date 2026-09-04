@@ -1,0 +1,14 @@
+{
+  "integrations": [
+    {"name":"Strava","module":"activity","status":"local-demo","api_ready":true},
+    {"name":"MyFitnessPal","module":"nutrition","status":"local-demo","api_ready":false,"note":"Use supported export/import or partner APIs where available."},
+    {"name":"Headspace","module":"meditate","status":"local-demo","api_ready":false},
+    {"name":"Sleep Cycle","module":"sleep","status":"local-demo","api_ready":false},
+    {"name":"Nike Training Club","module":"train","status":"local-demo","api_ready":false},
+    {"name":"Flo","module":"cycle","status":"local-demo","api_ready":false},
+    {"name":"Yuka","module":"scan","status":"local-demo","api_ready":false},
+    {"name":"BetterHelp","module":"talk","status":"local-demo","api_ready":false},
+    {"name":"Samsung Health","module":"overview","status":"local-demo","api_ready":false}
+  ],
+  "privacy": "The included suite stores demo/tracking data in browser localStorage. No third-party account is connected by default."
+}
